@@ -66,7 +66,7 @@ export default function MessagesPage() {
 
   return (
     <DashboardLayout 
-      title="" 
+      title="Messages" 
       subtitle="View, manage, reply to, and export messages submitted through the website contact form"
     >
       <div className="messages-page">
@@ -130,13 +130,14 @@ export default function MessagesPage() {
 
           {/* Filters Row */}
           <div className="p-4 flex gap-3 bg-white border-b border-[#DDD5C8]">
-            <div className="flex-1 max-w-md relative">
+            <div className="search-box" style={{ flex: '1', maxWidth: '100%' }}>
+              <Icons.search className="w-4 h-4 text-[#9A8C82]" />
               <input 
                 type="text" 
                 placeholder="Search by first name, last name, email, phone, or message..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full pl-4 pr-4 py-2.5 bg-white border border-[#DDD5C8] rounded-md text-xs text-[#1A1410] outline-none focus:border-[#D5A73F]"
+                className="w-full"
               />
             </div>
             <select 
@@ -197,7 +198,7 @@ export default function MessagesPage() {
                     <td className="p-4 align-top">
                       <div className="text-[#5C4E45] text-xs mb-1">{msg.email}</div>
                       <div className="text-[#5C4E45] text-xs">{msg.phone}</div>
-                      <div className="text-[10px] text-[#9A8C82] mt-1">0000</div>
+                      <div className="text-[10px] text-[#9A8C82] mt-1">ID: <span className="text-[#5C4E45] font-mono">{msg.id}</span></div>
                     </td>
                     <td className="p-4 align-top max-w-xs">
                       <p className="text-[#5C4E45] text-xs leading-relaxed line-clamp-3">

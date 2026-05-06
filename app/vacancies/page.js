@@ -3,182 +3,346 @@
 import React, { useState } from 'react';
 import DashboardLayout from '@/components/layout/DashboardLayout';
 import { Icons } from '@/components/shared/Icons';
-import StatusPill from '@/components/shared/StatusPill';
-import SearchToolbar from '@/components/shared/SearchToolbar';
-import EmptyState from '@/components/shared/EmptyState';
-import Panel from '@/components/panels/Panel';
-import GridToggle from '@/components/shared/GridToggle';
 import { useStore } from '@/hooks/useStore';
-import { vacanciesStore } from '@/lib/store';
+import { vacanciesStore, jobApplicationsStore } from '@/lib/store';
 import { useFilterSort } from '@/hooks/useFilterSort';
+import StatusPill from '@/components/shared/StatusPill';
+import VacancyForm from '@/components/forms/VacancyForm';
+import Link from 'next/link';
+
 import { useViewMode } from '@/hooks/useViewMode';
+import GridToggle from '@/components/shared/GridToggle';
 
 export default function VacanciesPage() {
-  const { data, createItem, updateItem, deleteItem } = useStore(vacanciesStore);
-  const { filteredAndSortedData, searchQuery, setSearchQuery } = useFilterSort(data, {}, { key: 'datePosted', order: 'desc' });
-  
+  const { data: vacancies, createItem, updateItem, deleteItem } = useStore(vacanciesStore);
+  const { data: applications } = useStore(jobApplicationsStore);
   const [view, setView] = useViewMode();
+  const { filteredAndSortedData, searchQuery, setSearchQuery } = useFilterSort(vacancies, {}, { key: 'datePosted', order: 'desc' });
+  
   const [selectedVacancy, setSelectedVacancy] = useState(null);
   const [isEditing, setIsEditing] = useState(false);
+  const [reviewVacancy, setReviewVacancy] = useState(null);
 
   const handleEdit = (vacancy) => {
     setSelectedVacancy(vacancy);
     setIsEditing(true);
+    setReviewVacancy(null);
   };
 
-  const handleClosePanel = () => {
+  const handleCloseForm = () => {
     setSelectedVacancy(null);
     setIsEditing(false);
   };
 
+  const handleSave = (finalData) => {
+    if (selectedVacancy.id === 'new') {
+      createItem(finalData);
+    } else {
+      updateItem(selectedVacancy.id, finalData);
+    }
+    handleCloseForm();
+  };
+
+  const handleReview = (vacancy) => {
+    if (reviewVacancy?.id === vacancy.id) {
+      setReviewVacancy(null);
+    } else {
+      setReviewVacancy(vacancy);
+    }
+  };
+
+  // Stats calculation
+  const activeCount = vacancies.filter(v => ['published', 'Open', 'open'].includes(v.status?.toLowerCase())).length;
+  const draftCount = vacancies.filter(v => ['draft', 'Draft'].includes(v.status)).length;
+  const closedCount = vacancies.filter(v => ['closed', 'Closed'].includes(v.status)).length;
+
+  if (isEditing) {
+    const isNew = selectedVacancy.id === 'new';
+    return (
+      <DashboardLayout title={isNew ? 'Add New Vacancy' : 'Edit Vacancy'} subtitle="Edit, publish, and manage job vacancies">
+        <VacancyForm 
+          initialData={isNew ? null : selectedVacancy}
+          isNew={isNew}
+          onSave={handleSave}
+          onCancel={handleCloseForm}
+        />
+      </DashboardLayout>
+    );
+  }
+
+  // Get applications for the reviewed vacancy
+  const vacancyApps = reviewVacancy 
+    ? applications.filter(app => app.role === reviewVacancy.title || app.vacancyId === reviewVacancy.id)
+    : [];
+
   return (
-    <DashboardLayout title="Vacancies" subtitle="Manage job postings and open positions">
-      <div className="page-head">
+    <DashboardLayout title="Vacancies" subtitle="Edit, publish, and manage job vacancies">
+      <>
+      {/* Page Header */}
+      <div className="page-head" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '32px' }}>
         <div className="page-title-wrap">
-          <h1>Vacancies</h1>
-          <p>Manage job postings and open positions</p>
+          <h1 style={{ fontSize: '28px', color: 'var(--burgundy)', marginBottom: '6px', fontWeight: 'bold', fontFamily: 'Verdana, sans-serif' }}>Vacancy List</h1>
+          <p style={{ fontSize: '13px', color: 'var(--ink-light)' }}>Create, manage, and monitor career opportunities on the Pieach website.</p>
         </div>
-        <button className="primary-btn" onClick={() => handleEdit({ id: 'new', title: '', department: '', location: '', type: 'Full-time', status: 'draft', applicantsCount: 0, datePosted: new Date().toISOString().split('T')[0] })}>
-          <Icons.settings style={{ width: '16px', height: '16px' }} />
-          Post New Job
+        <button 
+          onClick={() => handleEdit({ id: 'new' })}
+          className="primary-btn"
+          style={{ background: '#32171B', color: 'white', border: 'none', padding: '12px 24px', borderRadius: '6px', fontWeight: 'bold', fontSize: '12px', display: 'flex', alignItems: 'center', gap: '8px' }}
+        >
+          <Icons.plus style={{ width: '14px', height: '14px' }} /> Post New Vacancy
         </button>
       </div>
 
-      <SearchToolbar
-        searchQuery={searchQuery}
-        onSearchChange={setSearchQuery}
-        placeholder="Search job titles, departments..."
-      >
-        <GridToggle view={view} onViewChange={setView} />
-      </SearchToolbar>
+      {/* Stats Row */}
+      <div className="kpi-row" style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '18px', marginBottom: '30px' }}>
+        {[
+          { label: 'ACTIVE VACANCIES', value: activeCount },
+          { label: 'TOTAL APPLICATIONS', value: applications.length },
+          { label: 'DRAFT ROLES', value: draftCount },
+          { label: 'CLOSED LISTINGS', value: closedCount }
+        ].map((stat, i) => (
+          <div key={i} className="kpi-card" style={{ background: 'white', border: '1px solid var(--stone-dark)', borderTop: '3px solid var(--gold)', borderRadius: '6px', padding: '18px', textAlign: 'left', transition: 'transform 0.2s ease', cursor: 'default' }}>
+            <div style={{ fontSize: '28px', fontWeight: 'bold', color: 'var(--burgundy)', marginBottom: '6px', lineHeight: 1 }}>{stat.value}</div>
+            <div style={{ fontSize: '10px', color: 'var(--ink-light)', fontWeight: 'bold', letterSpacing: '0.08em', textTransform: 'uppercase' }}>{stat.label}</div>
+          </div>
+        ))}
+      </div>
 
-      {filteredAndSortedData.length === 0 ? (
-        <div style={{ padding: '30px', background: 'var(--white)', border: '1px solid var(--stone-dark)', borderRadius: '8px' }}>
-          <EmptyState title="No vacancies found" message="Try a different search query or post a new job." />
+      {/* Toolbar */}
+      <div className="toolbar" style={{ background: 'white', padding: '18px', borderRadius: '8px', border: '1px solid var(--stone-dark)', display: 'flex', gap: '15px', marginBottom: '28px', alignItems: 'center' }}>
+        <div className="search-box" style={{ flex: 1 }}>
+          <Icons.search className="w-4 h-4 text-[var(--ink-light)]" />
+          <input 
+            placeholder="Search vacancies by job title, department, or location" 
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            className="w-full"
+          />
         </div>
-      ) : view === 'list' ? (
-        <div style={{ background: 'var(--white)', border: '1px solid var(--stone-dark)', borderRadius: '8px', overflow: 'hidden' }}>
-          <table className="project-table" style={{ width: '100%', borderCollapse: 'collapse' }}>
-            <thead>
-              <tr>
-                <th style={{ textAlign: 'left', padding: '13px 16px', fontSize: '10px', textTransform: 'uppercase', letterSpacing: '0.07em', color: 'var(--burgundy)', background: 'var(--cream)', borderBottom: '1px solid var(--stone-dark)' }}>Job Title</th>
-                <th style={{ textAlign: 'left', padding: '13px 16px', fontSize: '10px', textTransform: 'uppercase', letterSpacing: '0.07em', color: 'var(--burgundy)', background: 'var(--cream)', borderBottom: '1px solid var(--stone-dark)' }}>Details</th>
-                <th style={{ textAlign: 'left', padding: '13px 16px', fontSize: '10px', textTransform: 'uppercase', letterSpacing: '0.07em', color: 'var(--burgundy)', background: 'var(--cream)', borderBottom: '1px solid var(--stone-dark)' }}>Applicants</th>
-                <th style={{ textAlign: 'left', padding: '13px 16px', fontSize: '10px', textTransform: 'uppercase', letterSpacing: '0.07em', color: 'var(--burgundy)', background: 'var(--cream)', borderBottom: '1px solid var(--stone-dark)' }}>Status</th>
-                <th style={{ width: '80px', background: 'var(--cream)', borderBottom: '1px solid var(--stone-dark)' }}></th>
-              </tr>
-            </thead>
-            <tbody>
-              {filteredAndSortedData.map((vacancy) => (
-                <tr key={vacancy.id} style={{ cursor: 'pointer' }} onClick={() => handleEdit(vacancy)}>
-                  <td style={{ padding: '14px 16px', borderBottom: '1px solid var(--stone)' }}>
-                    <div style={{ fontWeight: 'bold', color: 'var(--ink)', fontSize: '12px' }}>{vacancy.title}</div>
-                    <div style={{ fontSize: '10px', color: 'var(--ink-light)', marginTop: '3px' }}>{vacancy.department}</div>
-                  </td>
-                  <td style={{ padding: '14px 16px', borderBottom: '1px solid var(--stone)', fontSize: '12px', color: 'var(--ink-mid)' }}>
-                    <div>{vacancy.location}</div>
-                    <div style={{ fontSize: '10px', color: 'var(--ink-light)', marginTop: '2px' }}>{vacancy.type}</div>
-                  </td>
-                  <td style={{ padding: '14px 16px', borderBottom: '1px solid var(--stone)' }}>
-                    <div className="gallery-count" style={{ display: 'inline-flex', alignItems: 'center', gap: '5px', fontSize: '10px', color: 'var(--blue)', background: 'var(--blue-light)', padding: '4px 8px', borderRadius: '12px', fontWeight: 'bold' }}>
-                      {vacancy.applicantsCount} applications
-                    </div>
-                  </td>
-                  <td style={{ padding: '14px 16px', borderBottom: '1px solid var(--stone)' }}>
-                    <StatusPill status={vacancy.status} />
-                  </td>
-                  <td style={{ padding: '14px 16px', borderBottom: '1px solid var(--stone)', textAlign: 'right' }}>
-                    <button className="secondary-btn" onClick={(e) => { e.stopPropagation(); handleEdit(vacancy); }}>Edit</button>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
+        <div style={{ position: 'relative', minWidth: '180px' }}>
+          <select className="filter-select" style={{ width: '100%', padding: '12px 35px 12px 15px', border: '1px solid var(--stone-dark)', borderRadius: '6px', appearance: 'none', fontSize: '13px', background: 'var(--cream)' }}>
+            <option>All Statuses</option>
+            <option>Open</option>
+            <option>Draft</option>
+            <option>Closed</option>
+          </select>
+          <Icons.chevronDown style={{ position: 'absolute', right: '12px', top: '50%', transform: 'translateY(-50%)', width: '10px', height: '10px', color: 'var(--gold-dark)', pointerEvents: 'none' }} />
         </div>
-      ) : (
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: '14px' }}>
+        <GridToggle view={view} onViewChange={setView} />
+      </div>
+
+      {/* Grid View */}
+      {view === 'grid' && !reviewVacancy && (
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(320px, 1fr))', gap: '20px', marginBottom: '32px' }}>
           {filteredAndSortedData.map((vacancy) => (
-            <div key={vacancy.id} className="project-card" style={{ border: '1px solid var(--stone-dark)', borderRadius: '8px', background: 'var(--white)', overflow: 'hidden', cursor: 'pointer' }} onClick={() => handleEdit(vacancy)}>
-              <div style={{ padding: '16px' }}>
+            <div key={vacancy.id} className="card" style={{ background: 'white', border: '1px solid var(--stone-dark)', borderRadius: '8px', overflow: 'hidden', display: 'flex', flexDirection: 'column' }}>
+              <div style={{ padding: '24px', flex: 1 }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '12px' }}>
                   <StatusPill status={vacancy.status} />
-                  <span style={{ fontSize: '10px', color: 'var(--ink-light)' }}>{vacancy.datePosted}</span>
+                  <span style={{ fontSize: '11px', color: 'var(--ink-light)' }}>{vacancy.datePosted || vacancy.date}</span>
                 </div>
-                <div style={{ fontSize: '14px', fontWeight: 'bold', color: 'var(--ink)', marginBottom: '4px' }}>{vacancy.title}</div>
-                <div style={{ fontSize: '11px', color: 'var(--gold-dark)', fontWeight: 'bold', marginBottom: '14px' }}>{vacancy.department}</div>
-                <div style={{ display: 'flex', gap: '10px', fontSize: '11px', color: 'var(--ink-mid)' }}>
-                  <span>📍 {vacancy.location}</span>
-                  <span>⏱ {vacancy.type}</span>
+                <h3 style={{ fontSize: '18px', fontWeight: 'bold', color: 'var(--burgundy)', marginBottom: '8px' }}>{vacancy.title}</h3>
+                <div style={{ fontSize: '12px', color: 'var(--gold-dark)', fontWeight: 'bold', marginBottom: '16px' }}>{vacancy.type} • {vacancy.location}</div>
+                <p style={{ fontSize: '13px', color: 'var(--ink-mid)', lineHeight: '1.6', marginBottom: '20px' }}>{vacancy.description}</p>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                   <div style={{ padding: '4px 8px', background: 'var(--blue-light)', color: 'var(--blue)', borderRadius: '4px', fontSize: '11px', fontWeight: 'bold' }}>{vacancy.applicantsCount || 0} Applicants</div>
+                   <div style={{ padding: '4px 8px', background: 'var(--cream)', color: 'var(--ink-mid)', borderRadius: '4px', fontSize: '11px' }}>{vacancy.department}</div>
                 </div>
               </div>
-              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '11px 16px', borderTop: '1px solid var(--stone)', background: 'var(--cream)' }}>
-                 <div style={{ fontSize: '10px', color: 'var(--ink-light)' }}>
-                   <strong>{vacancy.applicantsCount}</strong> Applicants
-                 </div>
-                 <button className="secondary-btn" style={{ padding: '6px 10px', fontSize: '10px' }} onClick={(e) => { e.stopPropagation(); handleEdit(vacancy); }}>Edit Details</button>
+              <div style={{ padding: '16px 24px', borderTop: '1px solid var(--stone)', background: 'var(--cream)', display: 'flex', justifyContent: 'space-between' }}>
+                <button className="text-btn" style={{ color: 'var(--burgundy)', fontSize: '12px', fontWeight: 'bold' }} onClick={() => handleReview(vacancy)}>View Details</button>
+                <div style={{ display: 'flex', gap: '12px' }}>
+                  <Icons.pencil style={{ width: '16px', height: '16px', cursor: 'pointer', color: 'var(--ink-mid)' }} onClick={() => handleEdit(vacancy)} />
+                  <Icons.close style={{ width: '16px', height: '16px', cursor: 'pointer', color: 'var(--red)' }} onClick={() => deleteItem(vacancy.id)} />
+                </div>
               </div>
             </div>
           ))}
         </div>
       )}
 
-      <Panel 
-        isOpen={isEditing && !!selectedVacancy} 
-        onClose={handleClosePanel} 
-        title={selectedVacancy?.id === 'new' ? "Post New Job" : "Edit Vacancy"}
-        actions={
-          <>
-            {selectedVacancy?.id !== 'new' && (
-              <button className="secondary-btn" onClick={() => { deleteItem(selectedVacancy.id); handleClosePanel(); }} style={{ color: 'var(--red)', borderColor: 'var(--red)', marginRight: 'auto' }}>Delete</button>
-            )}
-            <button className="secondary-btn" onClick={handleClosePanel}>Cancel</button>
-            <button className="primary-btn" onClick={() => {
-               if(selectedVacancy.id === 'new') {
-                 createItem(selectedVacancy);
-               } else {
-                 updateItem(selectedVacancy.id, selectedVacancy);
-               }
-               handleClosePanel();
-            }}>Save Changes</button>
-          </>
-        }
+      {/* List Container with Review Panel */}
+      {(view === 'list' || reviewVacancy) && (
+        <div 
+          className="list-container"
+        style={{ 
+          display: 'grid', 
+          gridTemplateColumns: reviewVacancy ? 'minmax(0, 1fr) 400px' : '1fr', 
+          gap: '20px',
+          alignItems: 'start',
+          transition: 'all 0.4s cubic-bezier(0.25, 0.8, 0.25, 1)'
+        }}
       >
-        {selectedVacancy && (
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-            <div>
-              <label style={{ display: 'block', fontSize: '10px', textTransform: 'uppercase', letterSpacing: '0.06em', color: 'var(--burgundy)', fontWeight: 'bold', marginBottom: '6px' }}>Job Title</label>
-              <input type="text" value={selectedVacancy.title} onChange={e => setSelectedVacancy({...selectedVacancy, title: e.target.value})} style={{ width: '100%', border: '1px solid var(--stone-dark)', borderRadius: '6px', padding: '10px 11px', fontFamily: 'Verdana, sans-serif', fontSize: '12px', background: 'var(--cream)' }} />
+        <div className="card" style={{ background: 'white', border: '1px solid var(--stone-dark)', borderRadius: '8px', overflow: 'hidden' }}>
+          <div className="card-header" style={{ padding: '16px 20px', borderBottom: '1px solid var(--stone)', display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: 'var(--cream)' }}>
+            <span style={{ fontSize: '11px', fontWeight: 'bold', letterSpacing: '0.08em', color: 'var(--ink)' }}>VACANCY LIST</span>
+            <button style={{ background: 'none', border: 'none', color: 'var(--gold-dark)', fontSize: '11px', fontWeight: 'bold', textDecoration: 'underline', cursor: 'pointer' }}>Manage departments ›</button>
+          </div>
+
+          <div style={{ overflowX: 'auto' }}>
+            <table className="project-table" style={{ width: '100%', borderCollapse: 'collapse' }}>
+              <thead>
+                <tr style={{ borderBottom: '1px solid var(--stone-dark)' }}>
+                  <th style={{ textAlign: 'left', padding: '16px 20px', fontSize: '10px', fontWeight: 'bold', color: 'var(--burgundy)', textTransform: 'uppercase', background: 'var(--cream)', letterSpacing: '0.05em' }}>JOB TITLE</th>
+                  <th style={{ textAlign: 'left', padding: '16px 20px', fontSize: '10px', fontWeight: 'bold', color: 'var(--burgundy)', textTransform: 'uppercase', background: 'var(--cream)', letterSpacing: '0.05em' }}>EMPLOYMENT TYPE</th>
+                  <th style={{ textAlign: 'left', padding: '16px 20px', fontSize: '10px', fontWeight: 'bold', color: 'var(--burgundy)', textTransform: 'uppercase', background: 'var(--cream)', letterSpacing: '0.05em' }}>APPLICATIONS</th>
+                  <th style={{ textAlign: 'left', padding: '16px 20px', fontSize: '10px', fontWeight: 'bold', color: 'var(--burgundy)', textTransform: 'uppercase', background: 'var(--cream)', letterSpacing: '0.05em' }}>STATUS</th>
+                  <th style={{ textAlign: 'left', padding: '16px 20px', fontSize: '10px', fontWeight: 'bold', color: 'var(--burgundy)', textTransform: 'uppercase', background: 'var(--cream)', letterSpacing: '0.05em' }}>POSTED DATE</th>
+                  <th style={{ textAlign: 'left', padding: '16px 20px', fontSize: '10px', fontWeight: 'bold', color: 'var(--burgundy)', textTransform: 'uppercase', background: 'var(--cream)', letterSpacing: '0.05em' }}>ACTION</th>
+                </tr>
+              </thead>
+              <tbody>
+                {filteredAndSortedData.map((vacancy) => (
+                  <tr 
+                    key={vacancy.id} 
+                    onClick={() => handleReview(vacancy)}
+                    style={{ borderBottom: '1px solid var(--stone)', cursor: 'pointer', background: reviewVacancy?.id === vacancy.id ? '#FCFAF6' : 'transparent', transition: 'background 0.2s' }}
+                  >
+                    <td style={{ padding: '18px 20px' }}>
+                      <div style={{ fontSize: '14px', fontWeight: 'bold', color: 'var(--burgundy)' }}>{vacancy.title}</div>
+                      <div style={{ fontSize: '11px', color: 'var(--ink-light)', marginTop: '2px', maxWidth: '400px', lineHeight: '1.4', display: '-webkit-box', WebkitLineClamp: '2', WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>
+                        {vacancy.description}
+                      </div>
+                    </td>
+                    <td style={{ padding: '18px 20px' }}>
+                      <span style={{ fontSize: '12px', color: 'var(--ink-mid)' }}>{vacancy.type}</span>
+                    </td>
+                    <td style={{ padding: '18px 20px' }}>
+                      <span style={{ display: 'inline-flex', alignItems: 'center', gap: '5px', fontSize: '11px', color: 'var(--blue)', background: 'var(--blue-light)', padding: '6px 12px', borderRadius: '15px', fontWeight: 'bold' }}>
+                        {vacancy.applicantsCount || 0} Apps
+                      </span>
+                    </td>
+                    <td style={{ padding: '18px 20px' }}>
+                      <StatusPill status={vacancy.status} />
+                    </td>
+                    <td style={{ padding: '18px 20px' }}>
+                      <div style={{ fontSize: '12px', color: 'var(--ink-mid)' }}>{vacancy.datePosted || vacancy.date}</div>
+                    </td>
+                    <td style={{ padding: '18px 20px' }}>
+                      <div style={{ display: 'flex', gap: '8px' }}>
+                        <button className="icon-btn-bordered" title="View Details" onClick={(e) => { e.stopPropagation(); handleReview(vacancy); }}>
+                          <Icons.eye style={{ width: '16px', height: '16px' }} />
+                        </button>
+                        <button className="icon-btn-bordered" title="Edit Vacancy" onClick={(e) => { e.stopPropagation(); handleEdit(vacancy); }}>
+                          <Icons.pencil style={{ width: '16px', height: '16px' }} />
+                        </button>
+                        <button className="icon-btn-bordered" style={{ color: 'var(--red)' }} title="Delete" onClick={(e) => { e.stopPropagation(); deleteItem(vacancy.id); }}>
+                          <Icons.close style={{ width: '16px', height: '16px' }} />
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        {/* Review Panel */}
+        {reviewVacancy && (
+          <div className="card" style={{ background: 'white', border: '1px solid var(--stone-dark)', borderTop: '4px solid var(--gold)', borderRadius: '8px', overflow: 'hidden', position: 'sticky', top: '80px' }}>
+            <div className="card-header" style={{ padding: '16px 20px', borderBottom: '1px solid var(--stone)', display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: 'var(--cream)' }}>
+              <span style={{ fontSize: '11px', fontWeight: 'bold', letterSpacing: '0.08em', color: 'var(--burgundy)' }}>VACANCY PREVIEW</span>
+              <button 
+                onClick={() => setReviewVacancy(null)}
+                style={{ background: 'transparent', border: 'none', cursor: 'pointer', color: 'var(--ink-mid)', padding: '4px' }}
+              >
+                <Icons.close style={{ width: '18px', height: '18px' }} />
+              </button>
             </div>
-            <div>
-              <label style={{ display: 'block', fontSize: '10px', textTransform: 'uppercase', letterSpacing: '0.06em', color: 'var(--burgundy)', fontWeight: 'bold', marginBottom: '6px' }}>Department</label>
-              <input type="text" value={selectedVacancy.department} onChange={e => setSelectedVacancy({...selectedVacancy, department: e.target.value})} style={{ width: '100%', border: '1px solid var(--stone-dark)', borderRadius: '6px', padding: '10px 11px', fontFamily: 'Verdana, sans-serif', fontSize: '12px', background: 'var(--cream)' }} />
-            </div>
-            <div style={{ display: 'flex', gap: '14px' }}>
-              <div style={{ flex: 1 }}>
-                <label style={{ display: 'block', fontSize: '10px', textTransform: 'uppercase', letterSpacing: '0.06em', color: 'var(--burgundy)', fontWeight: 'bold', marginBottom: '6px' }}>Location</label>
-                <input type="text" value={selectedVacancy.location} onChange={e => setSelectedVacancy({...selectedVacancy, location: e.target.value})} style={{ width: '100%', border: '1px solid var(--stone-dark)', borderRadius: '6px', padding: '10px 11px', fontFamily: 'Verdana, sans-serif', fontSize: '12px', background: 'var(--cream)' }} />
+            <div style={{ padding: '24px' }}>
+              <div style={{ textAlign: 'center', border: '1px solid var(--stone-dark)', background: 'var(--cream)', borderRadius: '8px', padding: '24px', marginBottom: '24px' }}>
+                <div style={{ fontSize: '22px', fontWeight: 'bold', color: 'var(--burgundy)', marginBottom: '8px' }}>{reviewVacancy.title}</div>
+                <div style={{ fontSize: '12px', color: 'var(--gold-dark)', fontWeight: 'bold', textTransform: 'uppercase', letterSpacing: '0.05em' }}>{reviewVacancy.type} • {reviewVacancy.location}</div>
               </div>
-              <div style={{ flex: 1 }}>
-                <label style={{ display: 'block', fontSize: '10px', textTransform: 'uppercase', letterSpacing: '0.06em', color: 'var(--burgundy)', fontWeight: 'bold', marginBottom: '6px' }}>Type</label>
-                <select value={selectedVacancy.type} onChange={e => setSelectedVacancy({...selectedVacancy, type: e.target.value})} style={{ width: '100%', border: '1px solid var(--stone-dark)', borderRadius: '6px', padding: '10px 11px', fontFamily: 'Verdana, sans-serif', fontSize: '12px', background: 'var(--cream)' }}>
-                  <option value="Full-time">Full-time</option>
-                  <option value="Part-time">Part-time</option>
-                  <option value="Contract">Contract</option>
-                  <option value="Internship">Internship</option>
-                </select>
+
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px', marginBottom: '20px' }}>
+                <div style={{ border: '1px solid var(--stone-dark)', borderRadius: '6px', background: 'var(--cream)', padding: '12px' }}>
+                  <div style={{ fontSize: '9px', color: 'var(--ink-light)', textTransform: 'uppercase', letterSpacing: '0.08em', fontWeight: 'bold', marginBottom: '5px' }}>Current Status</div>
+                  <StatusPill status={reviewVacancy.status} />
+                </div>
+                <div style={{ border: '1px solid var(--stone-dark)', borderRadius: '6px', background: 'var(--cream)', padding: '12px' }}>
+                  <div style={{ fontSize: '9px', color: 'var(--ink-light)', textTransform: 'uppercase', letterSpacing: '0.08em', fontWeight: 'bold', marginBottom: '5px' }}>Deadline</div>
+                  <div style={{ fontSize: '12px', color: 'var(--ink)', fontWeight: 'bold' }}>{reviewVacancy.deadline || 'No deadline set'}</div>
+                </div>
               </div>
-            </div>
-            <div>
-              <label style={{ display: 'block', fontSize: '10px', textTransform: 'uppercase', letterSpacing: '0.06em', color: 'var(--burgundy)', fontWeight: 'bold', marginBottom: '6px' }}>Status</label>
-              <select value={selectedVacancy.status} onChange={e => setSelectedVacancy({...selectedVacancy, status: e.target.value})} style={{ width: '100%', border: '1px solid var(--stone-dark)', borderRadius: '6px', padding: '10px 11px', fontFamily: 'Verdana, sans-serif', fontSize: '12px', background: 'var(--cream)' }}>
-                <option value="published">Published (Active)</option>
-                <option value="draft">Draft</option>
-                <option value="archived">Archived (Closed)</option>
-              </select>
+
+              <div style={{ borderLeft: '4px solid var(--gold)', background: '#FCFAF6', padding: '18px', borderRadius: '4px', marginBottom: '24px' }}>
+                <div style={{ fontSize: '10px', color: 'var(--ink-light)', textTransform: 'uppercase', letterSpacing: '0.08em', fontWeight: 'bold', marginBottom: '10px' }}>JOB SUMMARY</div>
+                <div style={{ fontSize: '13px', color: 'var(--ink-mid)', lineHeight: '1.7', marginBottom: reviewVacancy.skills?.length > 0 ? '16px' : '0' }}>{reviewVacancy.description}</div>
+                
+                {reviewVacancy.skills?.length > 0 && (
+                  <>
+                    <div style={{ fontSize: '10px', color: 'var(--ink-light)', textTransform: 'uppercase', letterSpacing: '0.08em', fontWeight: 'bold', marginBottom: '8px' }}>Key Skills</div>
+                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
+                      {reviewVacancy.skills.map((skill, idx) => (
+                        <div key={idx} style={{ padding: '6px 10px', background: 'var(--white)', border: '1px solid var(--stone-dark)', borderRadius: '4px', fontSize: '11px', color: 'var(--burgundy)' }}>
+                          <span style={{ fontWeight: 'bold' }}>{skill.title}:</span> {skill.description}
+                        </div>
+                      ))}
+                    </div>
+                  </>
+                )}
+              </div>
+
+              <div style={{ border: '1px solid var(--stone-dark)', borderRadius: '8px', background: 'var(--white)', padding: '20px' }}>
+                <div style={{ fontSize: '10px', color: 'var(--ink-light)', textTransform: 'uppercase', letterSpacing: '0.08em', fontWeight: 'bold', marginBottom: '16px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                  <span>Recent Applications</span>
+                  <Link href={`/job-applications?vacancy=${reviewVacancy.id}`} style={{ color: 'var(--gold-dark)', fontSize: '11px', fontWeight: 'bold', textDecoration: 'underline' }}>View All ({vacancyApps.length})</Link>
+                </div>
+                {vacancyApps.length > 0 ? (
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                    {vacancyApps.slice(0, 3).map((app, idx) => (
+                      <div key={idx} style={{ display: 'flex', alignItems: 'center', gap: '12px', padding: '12px', background: 'var(--cream)', borderRadius: '6px', border: '1px solid var(--stone)' }}>
+                        <div style={{ width: '36px', height: '36px', borderRadius: '50%', background: 'var(--burgundy)', color: 'var(--gold)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '11px', fontWeight: 'bold', flexShrink: 0 }}>
+                          {app.name ? app.name.split(' ').map(n => n[0]).join('') : (app.applicantName ? app.applicantName.split(' ').map(n => n[0]).join('') : '??')}
+                        </div>
+                        <div style={{ flex: 1, minWidth: 0 }}>
+                          <div style={{ fontSize: '12px', fontWeight: 'bold', color: 'var(--ink)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{app.name || app.applicantName}</div>
+                          <div style={{ fontSize: '10px', color: 'var(--ink-light)' }}>{app.dateApplied || app.date}</div>
+                        </div>
+                        <StatusPill status={app.status} />
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <div style={{ fontSize: '11px', color: 'var(--ink-light)', textAlign: 'center', padding: '18px', background: 'var(--cream)', borderRadius: '6px', border: '1px solid var(--stone)' }}>No applications received yet.</div>
+                )}
+              </div>
+
+              <div style={{ display: 'flex', gap: '12px', marginTop: '24px' }}>
+                <button className="secondary-btn" style={{ flex: 1, padding: '14px', borderRadius: '6px' }} onClick={() => handleEdit(reviewVacancy)}>Edit Role</button>
+                <button className="primary-btn" style={{ flex: 1.5, padding: '14px', borderRadius: '6px' }} onClick={() => updateItem(reviewVacancy.id, { ...reviewVacancy, status: 'published' })}>Publish Listing</button>
+              </div>
             </div>
           </div>
         )}
-      </Panel>
+      </div>
+    )}
+
+      <style jsx>{`
+        .icon-btn-bordered {
+          width: 36px;
+          height: 36px;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          background: white;
+          border: 1px solid var(--stone-dark);
+          border-radius: 6px;
+          cursor: pointer;
+          color: var(--ink-mid);
+          transition: all 0.2s;
+        }
+        .icon-btn-bordered:hover {
+          background: var(--cream);
+          border-color: var(--gold);
+          color: var(--burgundy);
+          transform: translateY(-1px);
+          box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+        }
+      `}</style>
+    </>
     </DashboardLayout>
   );
 }

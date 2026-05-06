@@ -1,18 +1,26 @@
 import React from 'react';
 
 const statusConfig = {
-  published: { className: 's-approved', label: 'Published' },
-  draft: { className: 's-opened', label: 'Draft' },
-  archived: { className: 's-rejected', label: 'Archived' },
-  active: { className: 's-approved', label: 'Active' },
-  new: { className: 's-new', label: 'New' },
-  shortlisted: { className: 's-shortlisted', label: 'Shortlisted' },
-  rejected: { className: 's-rejected', label: 'Rejected' },
-  interview: { className: 's-pending', label: 'Interview' },
-  read: { className: 's-opened', label: 'Read' },
-  unread: { className: 's-new', label: 'Unread' },
-  replied: { className: 's-approved', label: 'Replied' },
-  scheduled: { className: 's-pending', label: 'Scheduled' },
+  // Vacancy Statuses
+  published: { className: 's-approved', label: 'OPEN' },
+  open: { className: 's-approved', label: 'OPEN' },
+  draft: { className: 's-pending', label: 'DRAFT' },
+  closed: { className: 's-opened', label: 'CLOSED' },
+  archived: { className: 's-opened', label: 'ARCHIVED' },
+  
+  // Job Application Statuses
+  new: { className: 's-new', label: 'NEW' },
+  shortlisted: { className: 's-shortlisted', label: 'SHORTLISTED' },
+  rejected: { className: 's-rejected', label: 'REJECTED' },
+  interview: { className: 's-pending', label: 'INTERVIEW' },
+  reviewed: { className: 's-pending', label: 'REVIEWED' },
+  
+  // Generic / Messages / Appointments
+  active: { className: 's-approved', label: 'ACTIVE' },
+  read: { className: 's-opened', label: 'READ' },
+  unread: { className: 's-new', label: 'UNREAD' },
+  replied: { className: 's-approved', label: 'REPLIED' },
+  scheduled: { className: 's-pending', label: 'SCHEDULED' },
 };
 
 export default function StatusPill({ status }) {

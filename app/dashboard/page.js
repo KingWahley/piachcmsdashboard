@@ -83,25 +83,30 @@ export default function DashboardPage() {
     <DashboardLayout title="Dashboard" subtitle="Welcome back — here's what needs your attention">
       {/* KPI ROW */}
       <div className="kpi-row">
-        <Link href="/projects" className="kpi-card" style={{ textDecoration: 'none' }}>
+        <Link href="/projects" className="kpi-card" style={{ textDecoration: 'none', minHeight: '100px' }}>
           <div className="kpi-value">{projects.length}</div>
           <div className="kpi-label">Projects</div>
+          <div className="kpi-sub">{ongoingProjects} ongoing · {onHoldProjects} on hold</div>
         </Link>
-        <Link href="/vacancies" className="kpi-card" style={{ textDecoration: 'none' }}>
+        <Link href="/vacancies" className="kpi-card" style={{ textDecoration: 'none', minHeight: '100px' }}>
           <div className="kpi-value">{activeVacancies}</div>
           <div className="kpi-label">Active Vacancies</div>
+          <div className="kpi-sub">{applications.length} total applications</div>
         </Link>
-        <Link href="/messages" className="kpi-card" style={{ textDecoration: 'none' }}>
+        <Link href="/messages" className="kpi-card" style={{ textDecoration: 'none', minHeight: '100px' }}>
           <div className="kpi-value">{messages.length}</div>
           <div className="kpi-label">Messages</div>
+          <div className="kpi-sub">{unreadMessages} unread · {openedMessages} opened</div>
         </Link>
-        <Link href="/job-applications" className="kpi-card" style={{ textDecoration: 'none' }}>
+        <Link href="/job-applications" className="kpi-card" style={{ textDecoration: 'none', minHeight: '100px' }}>
           <div className="kpi-value">{applications.length}</div>
           <div className="kpi-label">Job Applications</div>
+          <div className="kpi-sub">{shortlistedApps} shortlisted · {newApps} new</div>
         </Link>
-        <Link href="/appointments" className="kpi-card" style={{ textDecoration: 'none' }}>
+        <Link href="/appointments" className="kpi-card" style={{ textDecoration: 'none', minHeight: '100px' }}>
           <div className="kpi-value">{appointments.length}</div>
           <div className="kpi-label">Appointments</div>
+          <div className="kpi-sub">{pendingAppointments} pending approval</div>
         </Link>
       </div>
 
@@ -170,10 +175,10 @@ export default function DashboardPage() {
           </div>
           <div>
             {messages.slice(0, 3).map((msg) => (
-              <div key={msg.id} className={`msg-item ${msg.status === 'new' ? 'unread' : 'read'}`}>
-                <div className="msg-avatar">{getInitials(msg.senderName)}</div>
+              <div key={msg.id} className={`msg-item ${msg.status === 'unread' ? 'unread' : 'read'}`}>
+                <div className="msg-avatar">{getInitials(`${msg.firstName} ${msg.lastName}`)}</div>
                 <div className="msg-info">
-                  <div className="msg-sender">{msg.senderName}</div>
+                  <div className="msg-sender">{msg.firstName} {msg.lastName}</div>
                   <div className="msg-title">{msg.subject}</div>
                 </div>
                 <div>

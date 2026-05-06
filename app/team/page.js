@@ -92,14 +92,14 @@ export default function TeamPage() {
         boxShadow: '0 2px 4px rgba(0,0,0,0.02)'
       }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flexWrap: 'wrap' }}>
-          <div style={{ position: 'relative', flex: '1', minWidth: '300px' }}>
-            <Icons.search style={{ position: 'absolute', left: '14px', top: '50%', transform: 'translateY(-50%)', width: '18px', height: '18px', color: 'var(--ink-light)' }} />
+          <div className="search-box" style={{ flex: '1', minWidth: '300px' }}>
+            <Icons.search className="w-4 h-4 text-[var(--ink-light)]" />
             <input 
               type="text" 
               placeholder="Search team by name, designation, or qualifications"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              style={{ width: '100%', padding: '10px 16px 10px 42px', borderRadius: '6px', border: '1px solid var(--stone)', background: 'var(--white)', fontSize: '13px', outline: 'none', transition: 'border-color 0.2s' }}
+              className="w-full"
             />
           </div>
           

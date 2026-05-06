@@ -24,7 +24,7 @@ export default function AppointmentsListPage() {
 
   return (
     <DashboardLayout 
-      title="Our Team" 
+      title="Appointments" 
       subtitle="View, manage, and approve or reject appointment bookings"
     >
       <div className="max-w-[1400px] mx-auto">

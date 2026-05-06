@@ -88,14 +88,14 @@ export default function BlogPage() {
 
       {/* Toolbar */}
       <div className="bg-white border border-[#DDD5C8] rounded-lg p-5 mb-8 flex items-center gap-4">
-        <div className="relative flex-1">
-          <Icons.search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-[#9A8C82]" />
+        <div className="search-box" style={{ flex: '1', maxWidth: '100%' }}>
+          <Icons.search className="w-4 h-4 text-[#9A8C82]" />
           <input 
             type="text"
             placeholder="Search blog posts by title, author, category, or keyword"
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full pl-11 pr-4 py-3 bg-[#FAF7F2] border border-[#DDD5C8] rounded-md text-[13px] outline-none focus:border-[#D5A73F]"
+            className="w-full"
           />
         </div>
         <select 

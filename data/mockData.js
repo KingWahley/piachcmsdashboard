@@ -9,7 +9,14 @@ export const projectsData = [
     category: 'Residential',
     image: 'https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?w=800&q=80',
     date: '2025-10-15',
-    galleryCount: 8
+    galleryCount: 8,
+    city: 'Lekki',
+    state: 'Lagos',
+    country: 'Nigeria',
+    additionalFields: [
+      { id: 'desc-1', title: 'Design Approach', body: 'Describe the architectural thinking, materials, and planning considerations.' },
+      { id: 'desc-2', title: 'Key Features', body: 'Add custom project highlights such as floor planning, lighting, landscape, or finishes.' }
+    ]
   },
   {
     id: 'p2',
@@ -21,7 +28,14 @@ export const projectsData = [
     category: 'Commercial',
     image: 'https://images.unsplash.com/photo-1541888086925-ebb96f5b7298?w=800&q=80',
     date: '2025-11-20',
-    galleryCount: 12
+    galleryCount: 12,
+    city: 'Victoria Island',
+    state: 'Lagos',
+    country: 'Nigeria',
+    additionalFields: [
+      { id: 'desc-1', title: 'Design Approach', body: 'Describe the architectural thinking, materials, and planning considerations.' },
+      { id: 'desc-2', title: 'Key Features', body: 'Add custom project highlights such as floor planning, lighting, landscape, or finishes.' }
+    ]
   },
   {
     id: 'p3',
@@ -33,7 +47,14 @@ export const projectsData = [
     category: 'Commercial',
     image: 'https://images.unsplash.com/photo-1512917774080-9991f1c4c750?w=800&q=80',
     date: '2025-09-05',
-    galleryCount: 5
+    galleryCount: 5,
+    city: 'Maitama',
+    state: 'Abuja',
+    country: 'Nigeria',
+    additionalFields: [
+      { id: 'desc-1', title: 'Design Approach', body: 'Describe the architectural thinking, materials, and planning considerations.' },
+      { id: 'desc-2', title: 'Key Features', body: 'Add custom project highlights such as floor planning, lighting, landscape, or finishes.' }
+    ]
   },
   {
     id: 'p4',
@@ -45,16 +66,23 @@ export const projectsData = [
     category: 'Residential',
     image: 'https://images.unsplash.com/photo-1497366216548-37526070297c?w=800&q=80',
     date: '2025-08-12',
-    galleryCount: 16
+    galleryCount: 16,
+    city: 'Ikoyi',
+    state: 'Lagos',
+    country: 'Nigeria',
+    additionalFields: [
+      { id: 'desc-1', title: 'Design Approach', body: 'Describe the architectural thinking, materials, and planning considerations.' },
+      { id: 'desc-2', title: 'Key Features', body: 'Add custom project highlights such as floor planning, lighting, landscape, or finishes.' }
+    ]
   }
 ];
 
 export const projectCategories = [
-  { id: 'cat1', name: 'Commercial', description: 'Office buildings, retail spaces, and corporate campuses.', projectCount: 45 },
-  { id: 'cat2', name: 'Residential', description: 'Private homes, apartments, and housing developments.', projectCount: 32 },
-  { id: 'cat3', name: 'Civic', description: 'Museums, libraries, and government buildings.', projectCount: 12 },
-  { id: 'cat4', name: 'Hospitality', description: 'Hotels, resorts, and restaurants.', projectCount: 18 },
-  { id: 'cat5', name: 'Masterplanning', description: 'Urban design and large-scale community planning.', projectCount: 8 }
+  { id: 'cat1', name: 'Commercial', slug: 'commercial', status: 'Active', description: 'Office buildings, retail spaces, and corporate campuses.', projectCount: 45 },
+  { id: 'cat2', name: 'Residential', slug: 'residential', status: 'Active', description: 'Private homes, apartments, and housing developments.', projectCount: 32 },
+  { id: 'cat3', name: 'Civic', slug: 'civic', status: 'Active', description: 'Museums, libraries, and government buildings.', projectCount: 12 },
+  { id: 'cat4', name: 'Hospitality', slug: 'hospitality', status: 'Active', description: 'Hotels, resorts, and restaurants.', projectCount: 18 },
+  { id: 'cat5', name: 'Masterplanning', slug: 'masterplanning', status: 'Active', description: 'Urban design and large-scale community planning.', projectCount: 8 }
 ];
 
 export const teamData = [
@@ -68,7 +96,8 @@ export const teamData = [
     email: 'adaora.o@pieach.com',
     phone: '+234 801 234 5678',
     image: '',
-    status: 'active'
+    status: 'active',
+    displayOrder: 1
   },
   {
     id: 't2',
@@ -80,7 +109,8 @@ export const teamData = [
     email: 'tunde.n@pieach.com',
     phone: '+234 802 345 6789',
     image: '',
-    status: 'active'
+    status: 'active',
+    displayOrder: 1
   },
   {
     id: 't3',
@@ -92,7 +122,8 @@ export const teamData = [
     email: 'chidinma.e@pieach.com',
     phone: '+234 803 456 7890',
     image: '',
-    status: 'active'
+    status: 'active',
+    displayOrder: 1
   },
   {
     id: 't4',
@@ -104,7 +135,8 @@ export const teamData = [
     email: 'kelechi.a@pieach.com',
     phone: '+234 804 567 8901',
     image: '',
-    status: 'active'
+    status: 'active',
+    displayOrder: 1
   },
   {
     id: 't5',
@@ -116,7 +148,8 @@ export const teamData = [
     email: 'sarah.j@pieach.com',
     phone: '+234 805 678 9012',
     image: '',
-    status: 'inactive'
+    status: 'inactive',
+    displayOrder: 5
   }
 ];
 
@@ -221,7 +254,13 @@ export const vacanciesData = [
     type: 'Full-time',
     status: 'published',
     applicantsCount: 14,
-    datePosted: '2026-04-15'
+    datePosted: '2026-04-15',
+    deadline: '2026-06-30',
+    description: 'We are looking for an experienced Project Manager to oversee our high-end residential projects.',
+    skills: [
+      { title: 'Project Management', description: 'Lead complex architectural projects from concept to completion.' },
+      { title: 'Stakeholder Communication', description: 'Liaise with clients, contractors, and regulatory bodies.' }
+    ]
   },
   {
     id: 'v2',
@@ -231,7 +270,13 @@ export const vacanciesData = [
     type: 'Full-time',
     status: 'published',
     applicantsCount: 42,
-    datePosted: '2026-04-20'
+    datePosted: '2026-04-20',
+    deadline: '2026-07-15',
+    description: 'Join our design team as a Junior Architect to work on innovative concepts.',
+    skills: [
+      { title: 'Revit & BIM', description: 'Strong proficiency in Revit for architectural documentation.' },
+      { title: 'Concept Design', description: 'Ability to translate ideas into compelling visual concepts.' }
+    ]
   },
   {
     id: 'v3',
@@ -241,7 +286,13 @@ export const vacanciesData = [
     type: 'Contract',
     status: 'draft',
     applicantsCount: 0,
-    datePosted: '2026-05-01'
+    datePosted: '2026-05-01',
+    deadline: '2026-08-01',
+    description: 'Create stunning 3D visualizations and walk-throughs for our architectural projects.',
+    skills: [
+      { title: '3ds Max / V-Ray', description: 'Expertise in high-end architectural rendering.' },
+      { title: 'Unreal Engine 5', description: 'Experience with real-time architectural visualization.' }
+    ]
   }
 ];
 
@@ -255,7 +306,12 @@ export const blogData = [
     date: '2026-05-05',
     status: 'published',
     reads: 1240,
-    image: 'https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?w=400&q=80'
+    image: 'https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?w=400&q=80',
+    content: 'Full content of the blog post goes here...',
+    tags: ['Architecture', 'Sustainability', 'Design'],
+    seoTitle: 'Designing Homes That Breathe | Pieach CMS',
+    metaDescription: 'A guide to natural ventilation and spatial comfort in modern residential design.',
+    slug: 'designing-homes-that-breathe'
   },
   {
     id: 'b2',
@@ -266,7 +322,12 @@ export const blogData = [
     date: '2026-05-02',
     status: 'draft',
     reads: 890,
-    image: 'https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?w=400&q=80'
+    image: 'https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?w=400&q=80',
+    content: 'Full content of the blog post goes here...',
+    tags: ['Interior Design', 'Minimalism', 'Materials'],
+    seoTitle: 'Warm Minimalist Interior Materials | Pieach CMS',
+    metaDescription: 'Practical notes on texture, lighting, and finishes for refined interior spaces.',
+    slug: 'warm-minimalist-interiors'
   },
   {
     id: 'b3',
@@ -277,15 +338,20 @@ export const blogData = [
     date: '2026-05-10',
     status: 'scheduled',
     reads: 0,
-    image: 'https://images.unsplash.com/photo-1512917774080-9991f1c4c750?w=400&q=80'
+    image: 'https://images.unsplash.com/photo-1512917774080-9991f1c4c750?w=400&q=80',
+    content: 'Full content of the blog post goes here...',
+    tags: ['Project Insights', 'Courtyard Residence', 'Lekki'],
+    seoTitle: 'Behind the Design: Lekki Courtyard | Pieach CMS',
+    metaDescription: 'An inside look at the planning and design of the Lekki Courtyard Residence.',
+    slug: 'lekki-courtyard-residence'
   }
 ];
 
 export const blogCategoriesData = [
-  { id: 'bc1', name: 'Architecture Trends', description: 'Latest movements and concepts shaping modern architecture.', postCount: 12 },
-  { id: 'bc2', name: 'Interior Design', description: 'Insights into creating beautiful, functional interior spaces.', postCount: 8 },
-  { id: 'bc3', name: 'Industry News', description: 'Updates from the world of construction and design.', postCount: 5 },
-  { id: 'bc4', name: 'Sustainable Building', description: 'Eco-friendly materials, practices, and certifications.', postCount: 15 }
+  { id: 'bc1', name: 'Architecture Trends', slug: 'architecture-trends', status: 'Active', description: 'Latest movements and concepts shaping modern architecture.', postCount: 12 },
+  { id: 'bc2', name: 'Interior Design', slug: 'interior-design', status: 'Active', description: 'Insights into creating beautiful, functional interior spaces.', postCount: 8 },
+  { id: 'bc3', name: 'Industry News', slug: 'industry-news', status: 'Active', description: 'Updates from the world of construction and design.', postCount: 5 },
+  { id: 'bc4', name: 'Sustainable Building', slug: 'sustainable-building', status: 'Active', description: 'Eco-friendly materials, practices, and certifications.', postCount: 15 }
 ];
 
 export const mediaData = [

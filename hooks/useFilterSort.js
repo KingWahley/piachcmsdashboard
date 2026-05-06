@@ -1,3 +1,5 @@
+'use client';
+
 import { useState, useMemo } from 'react';
 
 export function useFilterSort(data = [], initialFilters = {}, initialSort = { key: 'date', order: 'desc' }) {

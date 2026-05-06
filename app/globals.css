@@ -29,6 +29,7 @@
     --gold-light: #F5E9C8;
     --gold-dark: #A87E28;
     --cream: #FAF7F2;
+    --cream-light: #fdfaf5;
     --stone: #F0EBE3;
     --stone-dark: #DDD5C8;
     --ink: #1A1410;
@@ -337,7 +338,7 @@
   padding: 10px 12px; color: var(--ink-light);
 }
 .search-box input {
-  border: none; outline: none; flex: 1; font-family: Verdana, sans-serif;
+  border: none !important; outline: none; flex: 1; font-family: Verdana, sans-serif;
   font-size: 12px; color: var(--ink); background: transparent;
 }
 .filter-select {
@@ -561,3 +562,38 @@
     text-align: left;
   }
 }
+/* LIST MODULES & TABLES */
+.project-table { width: 100%; border-collapse: collapse; }
+.project-table th {
+  text-align: left; padding: 13px 16px; font-size: 10px;
+  text-transform: uppercase; letter-spacing: 0.07em;
+  color: var(--burgundy); background: var(--cream);
+  border-bottom: 1px solid var(--stone-dark);
+}
+.project-table td { padding: 14px 16px; border-bottom: 1px solid var(--stone); vertical-align: middle; }
+.project-title { font-size: 12px; font-weight: bold; color: var(--ink); }
+.project-desc { font-size: 10px; color: var(--ink-light); margin-top: 3px; max-width: 380px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
+.gallery-count {
+  display: inline-flex; align-items: center; gap: 5px;
+  font-size: 10px; color: var(--blue); background: var(--blue-light);
+  padding: 4px 8px; border-radius: 12px; font-weight: bold;
+}
+
+.action-group { display: flex; gap: 6px; align-items: center; }
+.action-btn {
+  width: 30px; height: 30px; border-radius: 5px; border: 1px solid var(--stone-dark);
+  background: var(--white); color: var(--ink-mid);
+  display: flex; align-items: center; justify-content: center;
+  cursor: pointer; transition: all 0.15s;
+}
+.action-btn:hover { background: var(--gold-light); border-color: var(--gold); color: var(--burgundy); }
+.action-btn.delete:hover { background: var(--red-light); border-color: var(--red); color: var(--red); }
+
+/* KPI Updates */
+.kpi-row { display: grid; gap: 14px; margin-bottom: 22px; }
+.kpi-card {
+  background: var(--white); border: 1px solid var(--stone-dark);
+  border-top: 3px solid var(--gold); border-radius: 6px; padding: 16px 16px 14px; cursor: pointer;
+}
+.kpi-value { font-size: 28px; font-weight: bold; color: var(--burgundy); line-height: 1; font-family: Verdana; }

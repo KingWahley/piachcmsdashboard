@@ -7,14 +7,14 @@ export default function AppointmentFilters({
 }) {
   return (
     <div className="flex flex-col sm:flex-row items-center gap-4 mb-8 bg-white p-6 rounded-xl border-[1.5px] border-[var(--stone)] shadow-sm">
-      <div className="relative flex-1 w-full">
-        <Icons.search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-[var(--stone-dark)]" />
+      <div className="search-box" style={{ flex: '1', maxWidth: '100%' }}>
+        <Icons.search className="w-4 h-4 text-[var(--stone-dark)]" />
         <input
           type="text"
           placeholder="Search by name, email, or date"
           value={filterConfig.search}
           onChange={(e) => setFilterConfig(prev => ({ ...prev, search: e.target.value }))}
-          className="w-full pl-11 pr-4 py-3 text-sm bg-white border border-[var(--stone)] rounded-lg focus:outline-none focus:border-[var(--gold)] transition-colors placeholder:text-[var(--stone-dark)]"
+          className="w-full"
         />
       </div>
       
