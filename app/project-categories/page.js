@@ -13,11 +13,37 @@ export default function ProjectCategoriesPage() {
   const { data: projects } = useStore(projectsStore);
   const { filteredAndSortedData, searchQuery, setSearchQuery } = useFilterSort(data);
   const [isFormOpen, setIsFormOpen] = useState(false);
+  const [editingId, setEditingId] = useState(null);
   const [formData, setFormData] = useState({ name: '', slug: '', description: '', status: 'Active' });
 
   const toggleForm = () => {
-    setIsFormOpen(!isFormOpen);
-    setFormData({ name: '', slug: '', description: '', status: 'Active' });
+    if (isFormOpen) {
+      setIsFormOpen(false);
+      setEditingId(null);
+      setFormData({ name: '', slug: '', description: '', status: 'Active' });
+    } else {
+      setIsFormOpen(true);
+    }
+  };
+
+  const handleEdit = (cat) => {
+    setEditingId(cat.id);
+    setFormData({
+      name: cat.name,
+      slug: cat.slug,
+      description: cat.description || '',
+      status: cat.status || 'Active'
+    });
+    setIsFormOpen(true);
+  };
+
+  const handleSubmit = () => {
+    if (editingId) {
+      updateItem(editingId, formData);
+    } else {
+      createItem(formData);
+    }
+    toggleForm();
   };
 
   const getProjectCount = (catName) => {
@@ -32,7 +58,7 @@ export default function ProjectCategoriesPage() {
           <p>Add, edit, and manage categories that can be selected when creating or editing projects.</p>
         </div>
         <button className="primary-btn" onClick={toggleForm}>
-          <Icons.search style={{ width: '14px', height: '14px', marginRight: '8px' }} />
+          {isFormOpen ? <Icons.close style={{ width: '14px', height: '14px', marginRight: '8px' }} /> : <Icons.plus style={{ width: '14px', height: '14px', marginRight: '8px' }} />}
           {isFormOpen ? 'Close Form' : 'Add Category'}
         </button>
       </div>
@@ -48,7 +74,7 @@ export default function ProjectCategoriesPage() {
         </div>
         <div className="kpi-card">
           <div className="kpi-value">
-            {data.length > 0 ? data.reduce((a, b) => getProjectCount(a.name) > getProjectCount(b.name) ? a : b).name : '-'}
+            {data.length > 0 ? (data.reduce((a, b) => getProjectCount(a.name) > getProjectCount(b.name) ? a : b).name) : '-'}
           </div>
           <div className="kpi-label">Most Used</div>
         </div>
@@ -65,7 +91,7 @@ export default function ProjectCategoriesPage() {
         {isFormOpen && (
           <div className="card">
             <div className="card-header">
-              <span className="card-title">Add Category</span>
+              <span className="card-title">{editingId ? 'Edit Category' : 'Add Category'}</span>
             </div>
             <div className="form-body">
               <div className="form-group">
@@ -104,7 +130,7 @@ export default function ProjectCategoriesPage() {
               </div>
               <div className="form-actions">
                 <button className="secondary-btn" onClick={toggleForm}>Cancel</button>
-                <button className="primary-btn" onClick={() => { createItem(formData); toggleForm(); }}>Save Category</button>
+                <button className="primary-btn" onClick={handleSubmit}>{editingId ? 'Update Category' : 'Save Category'}</button>
               </div>
             </div>
           </div>
@@ -144,8 +170,12 @@ export default function ProjectCategoriesPage() {
                     </td>
                     <td>
                       <div className="action-group">
-                        <button className="action-btn" title="Edit">✎</button>
-                        <button className="action-btn delete" title="Delete" onClick={() => deleteItem(cat.id)}>×</button>
+                        <button className="action-btn" title="Edit" onClick={() => handleEdit(cat)}>
+                          <Icons.pencil style={{ width: '14px', height: '14px' }} />
+                        </button>
+                        <button className="action-btn delete" title="Delete" onClick={() => deleteItem(cat.id)}>
+                          <Icons.close style={{ width: '14px', height: '14px' }} />
+                        </button>
                       </div>
                     </td>
                   </tr>
