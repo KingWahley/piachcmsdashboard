@@ -25,8 +25,6 @@ export default function TeamMemberForm({ mode = 'create', initialData = null }) 
     image: '',
     bio: '',
     status: 'active',
-    email: '',
-    phone: '',
     displayOrder: '',
     ...initialData
   });

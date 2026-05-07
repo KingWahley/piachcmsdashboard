@@ -1,6 +1,5 @@
 'use client';
-
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import DashboardLayout from '@/components/layout/DashboardLayout';
 import { Icons } from '@/components/shared/Icons';
@@ -12,6 +11,7 @@ import { useStore } from '@/hooks/useStore';
 import { teamStore } from '@/lib/store';
 import { useFilterSort } from '@/hooks/useFilterSort';
 import { useViewMode } from '@/hooks/useViewMode';
+import Pagination from '@/components/shared/Pagination';
 
 export default function TeamPage() {
   const router = useRouter();
@@ -19,6 +19,8 @@ export default function TeamPage() {
   
   const [designationFilter, setDesignationFilter] = useState('all');
   const [statusFilter, setStatusFilter] = useState('all');
+  const [currentPage, setCurrentPage] = useState(1);
+  const pageSize = 7;
 
   const { filteredAndSortedData, searchQuery, setSearchQuery } = useFilterSort(
     data, 
@@ -28,6 +30,11 @@ export default function TeamPage() {
     }, 
     { key: 'name', order: 'asc' }
   );
+
+  // Reset page when filters change
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchQuery, designationFilter, statusFilter]);
   
   const [view, setView] = useViewMode();
 
@@ -39,6 +46,15 @@ export default function TeamPage() {
   ];
 
   const designations = ['all', ...new Set(data.map(m => m.role))];
+
+  // Pagination logic
+  const totalPages = Math.ceil(filteredAndSortedData.length / pageSize);
+  const paginatedData = filteredAndSortedData.slice((currentPage - 1) * pageSize, currentPage * pageSize);
+
+  const handlePageChange = (page) => {
+    setCurrentPage(page);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
 
   return (
     <DashboardLayout 
@@ -154,7 +170,7 @@ export default function TeamPage() {
           <EmptyState title="No team members found" message="Try a different search query or add a new team member." />
         </div>
       ) : view === 'list' ? (
-        <div style={{ background: 'var(--white)', border: '1.5px solid var(--stone)', borderRadius: '0 0 8px 8px', overflow: 'hidden' }}>
+        <div style={{ background: 'var(--white)', border: '1.5px solid var(--stone)', borderRadius: '0 0 8px 8px', overflow: 'hidden', marginBottom: '24px' }}>
           <table style={{ width: '100%', borderCollapse: 'collapse' }}>
             <thead>
               <tr style={{ borderBottom: '1.5px solid var(--stone)' }}>
@@ -167,7 +183,7 @@ export default function TeamPage() {
               </tr>
             </thead>
             <tbody>
-              {filteredAndSortedData.map((member) => (
+              {paginatedData.map((member) => (
                 <tr key={member.id} className="team-row" style={{ borderBottom: '1px solid var(--stone)', transition: 'background 0.2s' }}>
                   <td style={{ padding: '16px 20px' }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
@@ -211,36 +227,52 @@ export default function TeamPage() {
               ))}
             </tbody>
           </table>
+          <Pagination 
+            currentPage={currentPage}
+            totalPages={totalPages}
+            onPageChange={handlePageChange}
+            totalItems={filteredAndSortedData.length}
+            pageSize={pageSize}
+          />
         </div>
       ) : (
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: '24px' }}>
-          {filteredAndSortedData.map((member) => (
-            <div key={member.id} className="team-card-p" style={{ background: 'var(--white)', border: '1.5px solid var(--stone)', borderRadius: '10px', overflow: 'hidden', cursor: 'pointer' }} onClick={() => router.push(`/team/${member.id}/edit`)}>
-              <div style={{ height: '100px', background: 'var(--burgundy)', position: 'relative' }}>
-                <div style={{ position: 'absolute', bottom: '-28px', left: '16px', width: '70px', height: '70px', borderRadius: '50%', background: 'var(--gold)', border: '3px solid var(--white)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '20px', fontWeight: '800', color: 'var(--burgundy)', overflow: 'hidden' }}>
-                  {member.image ? (
-                    <img src={member.image} alt={member.name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-                  ) : (
-                    member.name.split(' ').map(n => n[0]).join('').substring(0, 2).toUpperCase()
-                  )}
+        <>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: '24px', marginBottom: '24px' }}>
+            {paginatedData.map((member) => (
+              <div key={member.id} className="team-card-p" style={{ background: 'var(--white)', border: '1.5px solid var(--stone)', borderRadius: '10px', overflow: 'hidden', cursor: 'pointer' }} onClick={() => router.push(`/team/${member.id}/edit`)}>
+                <div style={{ height: '100px', background: 'var(--burgundy)', position: 'relative' }}>
+                  <div style={{ position: 'absolute', bottom: '-28px', left: '16px', width: '70px', height: '70px', borderRadius: '50%', background: 'var(--gold)', border: '3px solid var(--white)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '20px', fontWeight: '800', color: 'var(--burgundy)', overflow: 'hidden' }}>
+                    {member.image ? (
+                      <img src={member.image} alt={member.name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                    ) : (
+                      member.name.split(' ').map(n => n[0]).join('').substring(0, 2).toUpperCase()
+                    )}
+                  </div>
+                </div>
+                <div style={{ padding: '38px 16px 16px' }}>
+                  <div style={{ fontSize: '16px', fontWeight: '700', color: 'var(--ink)', marginBottom: '2px' }}>{member.title} {member.name}</div>
+                  <div style={{ fontSize: '12px', color: 'var(--gold-dark)', fontWeight: '700', marginBottom: '10px', textTransform: 'uppercase', letterSpacing: '0.02em' }}>{member.role}</div>
+                  <p style={{ fontSize: '12px', color: 'var(--ink-light)', lineHeight: '1.5', margin: '0 0 16px', minHeight: '54px', display: '-webkit-box', WebkitLineClamp: '3', WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>
+                    {member.bio}
+                  </p>
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', paddingTop: '14px', borderTop: '1px solid var(--stone)' }}>
+                    <StatusPill status={member.status} />
+                    <span style={{ fontSize: '10px', fontWeight: '800', color: 'var(--burgundy)', background: 'var(--cream)', padding: '3px 8px', borderRadius: '4px', border: '1px solid var(--stone)' }}>
+                      {member.qualifications || 'B.Arch'}
+                    </span>
+                  </div>
                 </div>
               </div>
-              <div style={{ padding: '38px 16px 16px' }}>
-                <div style={{ fontSize: '16px', fontWeight: '700', color: 'var(--ink)', marginBottom: '2px' }}>{member.title} {member.name}</div>
-                <div style={{ fontSize: '12px', color: 'var(--gold-dark)', fontWeight: '700', marginBottom: '10px', textTransform: 'uppercase', letterSpacing: '0.02em' }}>{member.role}</div>
-                <p style={{ fontSize: '12px', color: 'var(--ink-light)', lineHeight: '1.5', margin: '0 0 16px', minHeight: '54px', display: '-webkit-box', WebkitLineClamp: '3', WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>
-                  {member.bio}
-                </p>
-                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', paddingTop: '14px', borderTop: '1px solid var(--stone)' }}>
-                  <StatusPill status={member.status} />
-                  <span style={{ fontSize: '10px', fontWeight: '800', color: 'var(--burgundy)', background: 'var(--cream)', padding: '3px 8px', borderRadius: '4px', border: '1px solid var(--stone)' }}>
-                    {member.qualifications || 'B.Arch'}
-                  </span>
-                </div>
-              </div>
-            </div>
-          ))}
-        </div>
+            ))}
+          </div>
+          <Pagination 
+            currentPage={currentPage}
+            totalPages={totalPages}
+            onPageChange={handlePageChange}
+            totalItems={filteredAndSortedData.length}
+            pageSize={pageSize}
+          />
+        </>
       )}
 
       <style jsx>{`

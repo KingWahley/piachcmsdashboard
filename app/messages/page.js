@@ -1,10 +1,10 @@
 'use client';
-
-import React, { useState } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import DashboardLayout from '@/components/layout/DashboardLayout';
 import { Icons } from '@/components/shared/Icons';
 import { useStore } from '@/hooks/useStore';
 import { messagesStore } from '@/lib/store';
+import Pagination from '@/components/shared/Pagination';
 
 export default function MessagesPage() {
   const { data, updateItem, deleteItem } = useStore(messagesStore);
@@ -12,6 +12,13 @@ export default function MessagesPage() {
   const [statusFilter, setStatusFilter] = useState('All Statuses');
   const [sortOrder, setSortOrder] = useState('Newest First');
   const [selectedIds, setSelectedIds] = useState([]);
+  const [currentPage, setCurrentPage] = useState(1);
+  const pageSize = 7;
+
+  // Reset page when filters change
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchQuery, statusFilter, sortOrder]);
 
   // Stats calculation
   const totalEntries = data.length;
@@ -19,27 +26,38 @@ export default function MessagesPage() {
   const readCount = data.filter(m => m.status === 'read').length;
 
   // Filter and Sort
-  const filteredData = data.filter(m => {
-    const matchesSearch = 
-      m.firstName.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      m.lastName.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      m.email.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      m.phone.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      m.body.toLowerCase().includes(searchQuery.toLowerCase());
-    
-    const matchesStatus = statusFilter === 'All Statuses' || m.status === statusFilter.toLowerCase();
-    
-    return matchesSearch && matchesStatus;
-  }).sort((a, b) => {
-    if (sortOrder === 'Newest First') return new Date(b.date) - new Date(a.date);
-    return new Date(a.date) - new Date(b.date);
-  });
+  const filteredData = useMemo(() => {
+    return data.filter(m => {
+      const matchesSearch = 
+        m.firstName.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        m.lastName.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        m.email.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        m.phone.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        m.body.toLowerCase().includes(searchQuery.toLowerCase());
+      
+      const matchesStatus = statusFilter === 'All Statuses' || m.status === statusFilter.toLowerCase();
+      
+      return matchesSearch && matchesStatus;
+    }).sort((a, b) => {
+      if (sortOrder === 'Newest First') return new Date(b.date) - new Date(a.date);
+      return new Date(a.date) - new Date(b.date);
+    });
+  }, [data, searchQuery, statusFilter, sortOrder]);
+
+  // Pagination logic
+  const totalPages = Math.ceil(filteredData.length / pageSize);
+  const paginatedData = filteredData.slice((currentPage - 1) * pageSize, currentPage * pageSize);
+
+  const handlePageChange = (page) => {
+    setCurrentPage(page);
+    setSelectedIds([]); // Clear selection when changing page
+  };
 
   const toggleSelectAll = () => {
-    if (selectedIds.length === filteredData.length) {
+    if (selectedIds.length === paginatedData.length) {
       setSelectedIds([]);
     } else {
-      setSelectedIds(filteredData.map(m => m.id));
+      setSelectedIds(paginatedData.map(m => m.id));
     }
   };
 
@@ -136,13 +154,19 @@ export default function MessagesPage() {
                 type="text" 
                 placeholder="Search by first name, last name, email, phone, or message..."
                 value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
+                onChange={(e) => {
+                  setSearchQuery(e.target.value);
+                  setCurrentPage(1);
+                }}
                 className="w-full"
               />
             </div>
             <select 
               value={statusFilter}
-              onChange={(e) => setStatusFilter(e.target.value)}
+              onChange={(e) => {
+                setStatusFilter(e.target.value);
+                setCurrentPage(1);
+              }}
               className="px-4 py-2.5 bg-[#FAF7F2] border border-[#DDD5C8] rounded-md text-xs text-[#5C4E45] font-medium outline-none"
             >
               <option>All Statuses</option>
@@ -151,7 +175,10 @@ export default function MessagesPage() {
             </select>
             <select 
               value={sortOrder}
-              onChange={(e) => setSortOrder(e.target.value)}
+              onChange={(e) => {
+                setSortOrder(e.target.value);
+                setCurrentPage(1);
+              }}
               className="px-4 py-2.5 bg-[#FAF7F2] border border-[#DDD5C8] rounded-md text-xs text-[#5C4E45] font-medium outline-none"
             >
               <option>Newest First</option>
@@ -167,7 +194,7 @@ export default function MessagesPage() {
                   <th className="p-4 text-left w-12">
                     <input 
                       type="checkbox" 
-                      checked={selectedIds.length === filteredData.length && filteredData.length > 0}
+                      checked={selectedIds.length === paginatedData.length && paginatedData.length > 0}
                       onChange={toggleSelectAll}
                       className="w-4 h-4 rounded border-[#DDD5C8]"
                     />
@@ -180,67 +207,83 @@ export default function MessagesPage() {
                 </tr>
               </thead>
               <tbody>
-                {filteredData.map((msg) => (
-                  <tr key={msg.id} className="border-b border-[#F0EBE3] bg-white last:border-0">
-                    <td className="p-4 align-top">
-                      <input 
-                        type="checkbox" 
-                        checked={selectedIds.includes(msg.id)}
-                        onChange={() => toggleSelect(msg.id)}
-                        className="w-4 h-4 rounded border-[#DDD5C8]"
-                      />
-                    </td>
-                    <td className="p-4 align-top">
-                      <div className="font-bold text-[#1A1410] text-sm mb-0.5">{msg.firstName} {msg.lastName}</div>
-                      <div className="text-[10px] text-[#9A8C82]">First Name: <span className="text-[#5C4E45]">{msg.firstName}</span></div>
-                      <div className="text-[10px] text-[#9A8C82]">Last Name: <span className="text-[#5C4E45]">{msg.lastName}</span></div>
-                    </td>
-                    <td className="p-4 align-top">
-                      <div className="text-[#5C4E45] text-xs mb-1">{msg.email}</div>
-                      <div className="text-[#5C4E45] text-xs">{msg.phone}</div>
-                      <div className="text-[10px] text-[#9A8C82] mt-1">ID: <span className="text-[#5C4E45] font-mono">{msg.id}</span></div>
-                    </td>
-                    <td className="p-4 align-top max-w-xs">
-                      <p className="text-[#5C4E45] text-xs leading-relaxed line-clamp-3">
-                        {msg.body}
-                      </p>
-                    </td>
-                    <td className="p-4 align-top text-center">
-                      <span className={`inline-block px-3 py-1 rounded-full text-[9px] font-bold uppercase tracking-wider ${
-                        msg.status === 'unread' 
-                          ? 'bg-[#F5E9C8] text-[#A87E28]' 
-                          : 'bg-[#E8F5EE] text-[#2D6A4F]'
-                      }`}>
-                        {msg.status}
-                      </span>
-                    </td>
-                    <td className="p-4 align-top">
-                      <div className="flex justify-center gap-1.5">
-                        <button className="p-1.5 border border-[#DDD5C8] rounded text-[#5C4E45] hover:bg-[#FAF7F2] transition-colors">
-                          <Icons.eye className="w-3.5 h-3.5" />
-                        </button>
-                        <button className="p-1.5 border border-[#DDD5C8] rounded text-[#5C4E45] hover:bg-[#FAF7F2] transition-colors">
-                          <Icons.reply className="w-3.5 h-3.5" />
-                        </button>
-                        <button 
-                          onClick={() => updateItem(msg.id, { ...msg, status: msg.status === 'unread' ? 'read' : 'unread' })}
-                          className="p-1.5 border border-[#DDD5C8] rounded text-[#5C4E45] hover:bg-[#FAF7F2] transition-colors"
-                        >
-                          <Icons.check className="w-3.5 h-3.5" />
-                        </button>
-                        <button 
-                          onClick={() => deleteItem(msg.id)}
-                          className="p-1.5 border border-[#DDD5C8] rounded text-[#5C4E45] hover:bg-[#FAF7F2] transition-colors"
-                        >
-                          <Icons.close className="w-3.5 h-3.5" />
-                        </button>
-                      </div>
+                {paginatedData.length === 0 ? (
+                  <tr>
+                    <td colSpan="6" className="p-12 text-center text-[#9A8C82] text-xs">
+                      No messages found matching your criteria.
                     </td>
                   </tr>
-                ))}
+                ) : (
+                  paginatedData.map((msg) => (
+                    <tr key={msg.id} className="border-b border-[#F0EBE3] bg-white last:border-0">
+                      <td className="p-4 align-top">
+                        <input 
+                          type="checkbox" 
+                          checked={selectedIds.includes(msg.id)}
+                          onChange={() => toggleSelect(msg.id)}
+                          className="w-4 h-4 rounded border-[#DDD5C8]"
+                        />
+                      </td>
+                      <td className="p-4 align-top">
+                        <div className="font-bold text-[#1A1410] text-sm mb-0.5">{msg.firstName} {msg.lastName}</div>
+                        <div className="text-[10px] text-[#9A8C82]">First Name: <span className="text-[#5C4E45]">{msg.firstName}</span></div>
+                        <div className="text-[10px] text-[#9A8C82]">Last Name: <span className="text-[#5C4E45]">{msg.lastName}</span></div>
+                      </td>
+                      <td className="p-4 align-top">
+                        <div className="text-[#5C4E45] text-xs mb-1">{msg.email}</div>
+                        <div className="text-[#5C4E45] text-xs">{msg.phone}</div>
+                        <div className="text-[10px] text-[#9A8C82] mt-1">ID: <span className="text-[#5C4E45] font-mono">{msg.id}</span></div>
+                      </td>
+                      <td className="p-4 align-top max-w-xs">
+                        <p className="text-[#5C4E45] text-xs leading-relaxed line-clamp-3">
+                          {msg.body}
+                        </p>
+                      </td>
+                      <td className="p-4 align-top text-center">
+                        <span className={`inline-block px-3 py-1 rounded-full text-[9px] font-bold uppercase tracking-wider ${
+                          msg.status === 'unread' 
+                            ? 'bg-[#F5E9C8] text-[#A87E28]' 
+                            : 'bg-[#E8F5EE] text-[#2D6A4F]'
+                        }`}>
+                          {msg.status}
+                        </span>
+                      </td>
+                      <td className="p-4 align-top">
+                        <div className="flex justify-center gap-1.5">
+                          <button className="p-1.5 border border-[#DDD5C8] rounded text-[#5C4E45] hover:bg-[#FAF7F2] transition-colors">
+                            <Icons.eye className="w-3.5 h-3.5" />
+                          </button>
+                          <button className="p-1.5 border border-[#DDD5C8] rounded text-[#5C4E45] hover:bg-[#FAF7F2] transition-colors">
+                            <Icons.reply className="w-3.5 h-3.5" />
+                          </button>
+                          <button 
+                            onClick={() => updateItem(msg.id, { ...msg, status: msg.status === 'unread' ? 'read' : 'unread' })}
+                            className="p-1.5 border border-[#DDD5C8] rounded text-[#5C4E45] hover:bg-[#FAF7F2] transition-colors"
+                          >
+                            <Icons.check className="w-3.5 h-3.5" />
+                          </button>
+                          <button 
+                            onClick={() => deleteItem(msg.id)}
+                            className="p-1.5 border border-[#DDD5C8] rounded text-[#5C4E45] hover:bg-[#FAF7F2] transition-colors"
+                          >
+                            <Icons.close className="w-3.5 h-3.5" />
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  ))
+                )}
               </tbody>
             </table>
           </div>
+
+          <Pagination 
+            currentPage={currentPage}
+            totalPages={totalPages}
+            onPageChange={handlePageChange}
+            totalItems={filteredData.length}
+            pageSize={pageSize}
+          />
         </div>
       </div>
 

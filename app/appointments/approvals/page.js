@@ -8,12 +8,15 @@ import { APPOINTMENT_STATUSES } from '@/constants/appointmentStatus';
 import AppointmentStatusBadge from '@/components/appointments/AppointmentStatusBadge';
 import { Icons } from '@/components/shared/Icons';
 import { format, isToday, isSameWeek } from 'date-fns';
+import Pagination from '@/components/shared/Pagination';
 
 export default function AppointmentApprovalsPage() {
   const { data: appointments, updateItem } = useStore(appointmentsStore);
   const [selectedId, setSelectedId] = useState(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState('Pending');
+  const [currentPage, setCurrentPage] = useState(1);
+  const pageSize = 7;
   const [adminNote, setAdminNote] = useState('');
 
   // Derived Statistics
@@ -37,6 +40,23 @@ export default function AppointmentApprovalsPage() {
       return matchesSearch && matchesStatus;
     });
   }, [appointments, searchQuery, statusFilter]);
+
+  // Pagination logic
+  const totalPages = Math.ceil(filteredAppointments.length / pageSize);
+  const paginatedAppointments = filteredAppointments.slice(
+    (currentPage - 1) * pageSize,
+    currentPage * pageSize
+  );
+
+  // Reset to first page when search or filters change
+  React.useEffect(() => {
+    setCurrentPage(1);
+  }, [searchQuery, statusFilter]);
+
+  const handlePageChange = (page) => {
+    setCurrentPage(page);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
 
   const selectedAppt = appointments.find(a => a.id === selectedId) || null;
 
@@ -107,7 +127,7 @@ export default function AppointmentApprovalsPage() {
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-[1fr_380px] gap-6 items-start">
-        <div className="bg-white border border-[var(--stone-dark)] rounded-md shadow-sm overflow-hidden">
+        <div className="bg-white border border-[var(--stone-dark)] rounded-md shadow-sm overflow-hidden flex flex-col">
           <div className="px-4 py-3.5 border-b border-[var(--stone)] flex justify-between items-center bg-[var(--cream)]">
             <span className="text-[11px] font-bold text-[var(--burgundy)] uppercase tracking-wider">Pending Appointment Requests</span>
             <button className="text-[10px] text-[var(--gold-dark)] font-bold underline">Export requests →</button>
@@ -125,8 +145,8 @@ export default function AppointmentApprovalsPage() {
                 </tr>
               </thead>
               <tbody>
-                {filteredAppointments.length > 0 ? (
-                  filteredAppointments.map(appt => (
+                {paginatedAppointments.length > 0 ? (
+                  paginatedAppointments.map(appt => (
                     <tr 
                       key={appt.id} 
                       className={`hover:bg-[#FCFAF6] cursor-pointer border-b border-[var(--stone)] transition-colors ${selectedId === appt.id ? 'bg-[#FCFAF6]' : ''}`}
@@ -186,6 +206,18 @@ export default function AppointmentApprovalsPage() {
               </tbody>
             </table>
           </div>
+
+          {filteredAppointments.length > 0 && (
+            <div className="px-4 py-3 border-t border-[var(--stone-dark)] bg-[var(--cream-light)]">
+              <Pagination 
+                currentPage={currentPage}
+                totalPages={totalPages}
+                onPageChange={handlePageChange}
+                totalItems={filteredAppointments.length}
+                pageSize={pageSize}
+              />
+            </div>
+          )}
         </div>
 
         <div className="bg-white border border-[var(--stone-dark)] rounded-md shadow-sm overflow-hidden sticky top-[80px]">

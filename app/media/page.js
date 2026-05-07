@@ -1,16 +1,16 @@
 'use client';
 
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useMemo } from 'react';
 import DashboardLayout from '@/components/layout/DashboardLayout';
 import { Icons } from '@/components/shared/Icons';
 import SearchToolbar from '@/components/shared/SearchToolbar';
 import EmptyState from '@/components/shared/EmptyState';
-import Panel from '@/components/panels/Panel';
 import GridToggle from '@/components/shared/GridToggle';
 import { useStore } from '@/hooks/useStore';
 import { mediaStore } from '@/lib/store';
 import { useFilterSort } from '@/hooks/useFilterSort';
 import { useViewMode } from '@/hooks/useViewMode';
+import Pagination from '@/components/shared/Pagination';
 
 export default function MediaPage() {
   const { data, createItem, updateItem, deleteItem } = useStore(mediaStore);
@@ -18,21 +18,33 @@ export default function MediaPage() {
   
   const [view, setView] = useViewMode();
   const [selectedFile, setSelectedFile] = useState(null);
+  const [currentPage, setCurrentPage] = useState(1);
+  const pageSize = 7;
   const fileInputRef = useRef(null);
 
-  const stats = [
+  // Pagination logic
+  const totalPages = Math.ceil(filteredAndSortedData.length / pageSize);
+  const paginatedData = filteredAndSortedData.slice((currentPage - 1) * pageSize, currentPage * pageSize);
+
+  const handlePageChange = (page) => {
+    setCurrentPage(page);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
+  // Reset page when search changes
+  React.useEffect(() => {
+    setCurrentPage(1);
+  }, [searchQuery]);
+
+  const stats = useMemo(() => [
     { label: 'Total Files', value: data.length },
     { label: 'Project Images', value: data.filter(i => i.usage === 'Project' || i.type?.includes('image')).length },
     { label: 'Documents', value: data.filter(i => !i.type?.includes('image')).length },
     { label: 'Storage Used', value: '2.4GB' }
-  ];
+  ], [data]);
 
-  const handleEdit = (file) => {
+  const handleSelect = (file) => {
     setSelectedFile(file);
-  };
-
-  const handleClosePanel = () => {
-    setSelectedFile(null);
   };
 
   const handleFileUpload = (e) => {
@@ -58,223 +70,269 @@ export default function MediaPage() {
 
   return (
     <DashboardLayout title="Media Library" subtitle="Manage images, documents, and other assets">
-      <div className="page-head">
-        <div className="page-title-wrap">
-          <h1>Media Library</h1>
-          <p>Manage images, documents, and other assets</p>
-        </div>
-        <div style={{ display: 'flex', gap: '10px' }}>
-          <input 
-            type="file" 
-            ref={fileInputRef} 
-            onChange={handleFileUpload} 
-            multiple 
-            style={{ display: 'none' }} 
-          />
-          <button className="primary-btn" onClick={() => fileInputRef.current?.click()}>
-            <Icons.plus style={{ width: '16px', height: '16px' }} />
-            Upload Files
-          </button>
-        </div>
-      </div>
-
-      <div className="kpi-row" style={{ gridTemplateColumns: 'repeat(4, 1fr)', marginBottom: '25px' }}>
-        {stats.map((stat, i) => (
-          <div key={i} className="kpi-card" style={{ cursor: 'default' }}>
-            <div className="kpi-value">{stat.value}</div>
-            <div className="kpi-label">{stat.label}</div>
-          </div>
-        ))}
-      </div>
-
-      <SearchToolbar
-        searchQuery={searchQuery}
-        onSearchChange={setSearchQuery}
-        placeholder="Search files by name, type, or usage..."
-      >
-        <GridToggle view={view} onViewChange={setView} />
-      </SearchToolbar>
-
-      {filteredAndSortedData.length === 0 ? (
-        <div style={{ padding: '30px', background: 'var(--white)', border: '1px solid var(--stone-dark)', borderRadius: '8px' }}>
-          <EmptyState title="No media found" message="Try a different search query or upload new files." />
-        </div>
-      ) : view === 'list' ? (
-        <div style={{ background: 'var(--white)', border: '1px solid var(--stone-dark)', borderRadius: '8px', overflow: 'hidden' }}>
-          <table className="project-table" style={{ width: '100%', borderCollapse: 'collapse' }}>
-            <thead>
-              <tr>
-                <th>File Name</th>
-                <th>Usage</th>
-                <th>Size</th>
-                <th>Date Added</th>
-                <th style={{ width: '80px' }}></th>
-              </tr>
-            </thead>
-            <tbody>
-              {filteredAndSortedData.map((file) => (
-                <tr key={file.id} style={{ cursor: 'pointer' }} onClick={() => handleEdit(file)}>
-                  <td style={{ padding: '14px 16px', borderBottom: '1px solid var(--stone)' }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                       <div style={{ width: '40px', height: '40px', background: 'var(--cream)', border: '1px solid var(--stone-dark)', borderRadius: '4px', display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'hidden' }}>
-                         {file.type?.includes('image') && file.url ? (
-                           <img src={file.url} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-                         ) : (
-                           <Icons.document style={{width: 20, height: 20, color: 'var(--ink-light)'}} />
-                         )}
-                       </div>
-                       <div>
-                         <div style={{ fontWeight: 'bold', color: 'var(--ink)', fontSize: '12px' }}>{file.filename}</div>
-                         <div style={{ fontSize: '10px', color: 'var(--ink-light)', marginTop: '3px' }}>{file.type || 'Unknown'}</div>
-                       </div>
-                    </div>
-                  </td>
-                  <td>
-                    <span style={{ 
-                      fontSize: '9px', fontWeight: 'bold', padding: '4px 8px', borderRadius: '12px', textTransform: 'uppercase',
-                      background: file.usage === 'Project' ? 'var(--blue-light)' : 'var(--stone)',
-                      color: file.usage === 'Project' ? 'var(--blue)' : 'var(--ink-mid)'
-                    }}>
-                      {file.usage || 'Unassigned'}
-                    </span>
-                  </td>
-                  <td style={{ fontSize: '12px', color: 'var(--ink-mid)' }}>{file.size}</td>
-                  <td style={{ fontSize: '12px', color: 'var(--ink-mid)' }}>{file.dateAdded}</td>
-                  <td style={{ textAlign: 'right' }}>
-                    <button className="icon-btn" onClick={(e) => { e.stopPropagation(); handleEdit(file); }}>
-                      <Icons.eye style={{ width: '14px', height: '14px' }} />
-                    </button>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      ) : (
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(180px, 1fr))', gap: '16px' }}>
-          {filteredAndSortedData.map((file) => (
-            <div key={file.id} className="card" style={{ cursor: 'pointer', transition: 'all 0.2s' }} onClick={() => handleEdit(file)}>
-              <div style={{ height: '160px', background: 'var(--cream)', borderBottom: '1px solid var(--stone-dark)', display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'hidden', position: 'relative' }}>
-                {file.type?.includes('image') && file.url ? (
-                  <img src={file.url} alt={file.filename} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-                ) : (
-                  <Icons.document style={{ width: '40px', height: '40px', color: 'var(--ink-light)' }} />
-                )}
-                <div style={{ position: 'absolute', top: '8px', right: '8px' }}>
-                  <span style={{ fontSize: '8px', fontWeight: 'bold', background: 'rgba(255,255,255,0.9)', padding: '2px 6px', borderRadius: '4px', textTransform: 'uppercase' }}>{file.type?.split('/')[1] || 'File'}</span>
-                </div>
-              </div>
-              <div style={{ padding: '12px' }}>
-                <div style={{ fontSize: '11px', fontWeight: 'bold', color: 'var(--ink)', marginBottom: '4px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{file.filename}</div>
-                <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '9px', color: 'var(--ink-light)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
-                  <span>{file.size}</span>
-                  <span>{file.dateAdded}</span>
-                </div>
-              </div>
+      <div className="flex flex-col h-full overflow-hidden">
+        {/* Header Stats */}
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
+          {stats.map((stat, i) => (
+            <div key={i} className="bg-white border border-[var(--stone-dark)] border-t-4 border-t-[var(--gold)] rounded-xl p-5 shadow-sm">
+              <div className="text-2xl font-bold text-[var(--burgundy)]">{stat.value}</div>
+              <div className="text-[10px] uppercase tracking-wider text-[var(--ink-light)] mt-1 font-semibold">{stat.label}</div>
             </div>
           ))}
         </div>
-      )}
 
-      <Panel 
-        isOpen={!!selectedFile} 
-        onClose={handleClosePanel} 
-        title="Asset Details"
-        actions={
-          <>
+        {/* Toolbar */}
+        <div className="flex items-center justify-between mb-6 gap-4">
+          <div className="flex-1 relative">
+            <Icons.search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-[var(--ink-light)]" />
+            <input 
+              type="text"
+              placeholder="Search assets..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="w-full pl-11 pr-4 py-3 bg-white border border-[var(--stone-dark)] rounded-xl text-sm focus:outline-none focus:border-[var(--gold)] shadow-sm transition-all"
+            />
+          </div>
+          
+          <div className="flex items-center gap-3">
+            <GridToggle view={view} onViewChange={setView} />
+            
+            <input 
+              type="file" 
+              ref={fileInputRef} 
+              onChange={handleFileUpload} 
+              multiple 
+              className="hidden"
+            />
             <button 
-              className="secondary-btn" 
-              onClick={() => { deleteItem(selectedFile.id); handleClosePanel(); }} 
-              style={{ color: 'var(--red)', borderColor: 'var(--red)', marginRight: 'auto' }}
+              className="flex items-center gap-2 bg-[var(--burgundy)] text-white px-5 py-3 rounded-xl text-sm font-bold hover:bg-[var(--burgundy-mid)] transition-colors shadow-md"
+              onClick={() => fileInputRef.current?.click()}
             >
-              Delete Asset
+              <Icons.plus className="w-4 h-4" />
+              Upload Assets
             </button>
-            <button className="secondary-btn" onClick={handleClosePanel}>Close</button>
-            <button className="primary-btn" onClick={() => {
-              updateItem(selectedFile.id, selectedFile);
-              handleClosePanel();
-            }}>Save Details</button>
-          </>
-        }
-      >
-        {selectedFile && (
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
-            <div style={{ width: '100%', height: '240px', borderRadius: '8px', overflow: 'hidden', background: '#2a1a10', border: '1px solid var(--stone-dark)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-              {selectedFile.type?.includes('image') && selectedFile.url ? (
-                <img src={selectedFile.url} alt={selectedFile.filename} style={{ width: '100%', height: '100%', objectFit: 'contain' }} />
-              ) : (
-                <Icons.document style={{ width: '60px', height: '60px', color: 'rgba(255,255,255,0.2)' }} />
-              )}
-            </div>
+          </div>
+        </div>
 
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: '15px' }}>
-              <div>
-                <label style={{ display: 'block', fontSize: '9px', fontBlack: 'bold', textTransform: 'uppercase', letterSpacing: '0.08em', color: 'var(--ink-light)', marginBottom: '6px' }}>File Name</label>
-                <input 
-                  type="text" 
-                  value={selectedFile.filename} 
-                  onChange={e => setSelectedFile({...selectedFile, filename: e.target.value})} 
-                  style={{ width: '100%', border: '1px solid var(--stone-dark)', borderRadius: '6px', padding: '10px 12px', fontSize: '13px', background: 'var(--white)', fontWeight: 'bold' }} 
-                />
-              </div>
-
-              <div>
-                <label style={{ display: 'block', fontSize: '9px', fontBlack: 'bold', textTransform: 'uppercase', letterSpacing: '0.08em', color: 'var(--ink-light)', marginBottom: '6px' }}>File URL</label>
-                <div style={{ display: 'flex', gap: '8px' }}>
-                  <input 
-                    type="text" 
-                    value={selectedFile.url} 
-                    readOnly
-                    style={{ flex: 1, border: '1px solid var(--stone-dark)', borderRadius: '6px', padding: '10px 12px', fontSize: '11px', background: 'var(--cream)', color: 'var(--ink-mid)' }} 
+        {/* Main Split Content */}
+        <div className="flex flex-1 gap-6 min-h-0">
+          {/* Left: Media Grid/List */}
+          <div className={`flex-1 bg-white border border-[var(--stone-dark)] rounded-2xl overflow-hidden flex flex-col shadow-sm transition-all duration-300 ${selectedFile ? 'flex-[1.5]' : ''}`}>
+            <div className="flex-1 overflow-y-auto p-6 scroll-smooth">
+              {filteredAndSortedData.length === 0 ? (
+                <div className="h-full flex items-center justify-center">
+                  <EmptyState 
+                    title="No media found" 
+                    message="Try a different search query or upload new files." 
                   />
-                  <button 
-                    className="secondary-btn" 
-                    style={{ padding: '8px 12px', fontSize: '10px' }}
-                    onClick={() => {
-                      navigator.clipboard.writeText(selectedFile.url);
-                      alert('URL copied to clipboard');
-                    }}
-                  >
-                    Copy
-                  </button>
                 </div>
-              </div>
-
-              <div>
-                <label style={{ display: 'block', fontSize: '9px', fontBlack: 'bold', textTransform: 'uppercase', letterSpacing: '0.08em', color: 'var(--ink-light)', marginBottom: '6px' }}>Alt Text</label>
-                <input 
-                  type="text" 
-                  value={selectedFile.altText || ''} 
-                  placeholder="Describe image for accessibility..."
-                  onChange={e => setSelectedFile({...selectedFile, altText: e.target.value})} 
-                  style={{ width: '100%', border: '1px solid var(--stone-dark)', borderRadius: '6px', padding: '10px 12px', fontSize: '13px', background: 'var(--white)' }} 
-                />
-              </div>
-
-              <div>
-                <label style={{ display: 'block', fontSize: '9px', fontBlack: 'bold', textTransform: 'uppercase', letterSpacing: '0.08em', color: 'var(--ink-light)', marginBottom: '6px' }}>Caption</label>
-                <textarea 
-                  value={selectedFile.caption || ''} 
-                  placeholder="Enter a brief caption..."
-                  onChange={e => setSelectedFile({...selectedFile, caption: e.target.value})} 
-                  style={{ width: '100%', border: '1px solid var(--stone-dark)', borderRadius: '6px', padding: '10px 12px', fontSize: '13px', background: 'var(--white)', minHeight: '80px', resize: 'none' }} 
-                />
-              </div>
-
-              <div>
-                <label style={{ display: 'block', fontSize: '9px', fontBlack: 'bold', textTransform: 'uppercase', letterSpacing: '0.08em', color: 'var(--ink-light)', marginBottom: '6px' }}>Used In</label>
-                <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
-                  {(selectedFile.usedIn || ['Unassigned']).map((tag, i) => (
-                    <span key={i} style={{ fontSize: '10px', fontWeight: 'bold', padding: '5px 12px', borderRadius: '15px', background: 'var(--blue-light)', color: 'var(--blue)', textTransform: 'uppercase' }}>
-                      {tag}
-                    </span>
+              ) : view === 'grid' ? (
+                <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
+                  {paginatedData.map((file) => (
+                    <div 
+                      key={file.id}
+                      onClick={() => handleSelect(file)}
+                      className={`group cursor-pointer rounded-xl overflow-hidden border-2 transition-all duration-200 ${
+                        selectedFile?.id === file.id 
+                          ? 'border-[var(--gold)] bg-[var(--gold-light)] shadow-md' 
+                          : 'border-[var(--stone-dark)] bg-[var(--white)] hover:border-[var(--gold)] hover:shadow-lg'
+                      }`}
+                    >
+                      <div className="aspect-square bg-[var(--cream)] flex items-center justify-center overflow-hidden relative">
+                        {file.type?.includes('image') ? (
+                          <img 
+                            src={file.url} 
+                            alt={file.filename} 
+                            className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-110" 
+                          />
+                        ) : (
+                          <Icons.document className="w-10 h-10 text-[var(--ink-light)]" />
+                        )}
+                        <div className="absolute top-2 right-2 px-2 py-0.5 bg-white/90 backdrop-blur rounded-md text-[8px] font-bold uppercase tracking-tight shadow-sm">
+                          {file.type?.split('/')[1] || 'File'}
+                        </div>
+                      </div>
+                      <div className="p-3">
+                        <div className="text-[11px] font-bold text-[var(--ink)] truncate mb-1">{file.filename}</div>
+                        <div className="flex justify-between items-center text-[9px] text-[var(--ink-light)] uppercase font-medium">
+                          <span>{file.size}</span>
+                          <span>{file.dateAdded}</span>
+                        </div>
+                      </div>
+                    </div>
                   ))}
                 </div>
+              ) : (
+                <table className="w-full text-left">
+                  <thead className="sticky top-0 bg-white border-b border-[var(--stone-dark)] z-10">
+                    <tr>
+                      <th className="px-4 py-3 text-[10px] font-bold uppercase tracking-wider text-[var(--burgundy)]">File Name</th>
+                      <th className="px-4 py-3 text-[10px] font-bold uppercase tracking-wider text-[var(--burgundy)]">Usage</th>
+                      <th className="px-4 py-3 text-[10px] font-bold uppercase tracking-wider text-[var(--burgundy)]">Size</th>
+                      <th className="px-4 py-3 text-[10px] font-bold uppercase tracking-wider text-[var(--burgundy)]">Date</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {paginatedData.map((file) => (
+                      <tr 
+                        key={file.id}
+                        onClick={() => handleSelect(file)}
+                        className={`cursor-pointer border-b border-[var(--stone)] transition-colors ${
+                          selectedFile?.id === file.id ? 'bg-[var(--gold-light)]' : 'hover:bg-[var(--cream)]'
+                        }`}
+                      >
+                        <td className="px-4 py-3">
+                          <div className="flex items-center gap-3">
+                            <div className="w-10 h-10 rounded bg-[var(--cream)] border border-[var(--stone-dark)] flex items-center justify-center overflow-hidden shrink-0">
+                              {file.type?.includes('image') ? (
+                                <img src={file.url} className="w-full h-full object-cover" />
+                              ) : (
+                                <Icons.document className="w-5 h-5 text-[var(--ink-light)]" />
+                              )}
+                            </div>
+                            <div>
+                              <div className="text-xs font-bold text-[var(--ink)]">{file.filename}</div>
+                              <div className="text-[10px] text-[var(--ink-light)]">{file.type}</div>
+                            </div>
+                          </div>
+                        </td>
+                        <td className="px-4 py-3">
+                          <span className="text-[9px] font-bold px-2 py-1 rounded-full bg-[var(--blue-light)] text-[var(--blue)] uppercase">
+                            {file.usage || 'Unassigned'}
+                          </span>
+                        </td>
+                        <td className="px-4 py-3 text-xs text-[var(--ink-mid)]">{file.size}</td>
+                        <td className="px-4 py-3 text-xs text-[var(--ink-mid)]">{file.dateAdded}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              )}
+            </div>
+            <Pagination 
+              currentPage={currentPage}
+              totalPages={totalPages}
+              onPageChange={handlePageChange}
+              totalItems={filteredAndSortedData.length}
+              pageSize={pageSize}
+            />
+          </div>
+          
+          {/* Right: Details Panel (Conditional) */}
+          {selectedFile && (
+            <div className="w-[400px] bg-white border border-[var(--stone-dark)] rounded-2xl flex flex-col shadow-md animate-in slide-in-from-right duration-300">
+              <div className="p-5 border-b border-[var(--stone-dark)] flex items-center justify-between">
+                <h2 className="text-sm font-bold text-[var(--burgundy)] uppercase tracking-wider">Asset Details</h2>
+                <button 
+                  onClick={() => setSelectedFile(null)}
+                  className="p-1.5 hover:bg-[var(--stone)] rounded-lg transition-colors"
+                >
+                  <Icons.close className="w-4 h-4 text-[var(--ink-light)]" />
+                </button>
+              </div>
+
+              <div className="flex-1 overflow-y-auto p-6 space-y-6">
+                <div className="aspect-video bg-[var(--ink)] rounded-xl border border-[var(--stone-dark)] overflow-hidden flex items-center justify-center relative">
+                  {selectedFile.type?.includes('image') ? (
+                    <img src={selectedFile.url} className="w-full h-full object-contain" />
+                  ) : (
+                    <Icons.document className="w-16 h-16 text-white/20" />
+                  )}
+                </div>
+
+                <div className="space-y-4">
+                  <div className="group">
+                    <label className="block text-[9px] font-bold text-[var(--ink-light)] uppercase tracking-widest mb-1.5">File Name</label>
+                    <input 
+                      type="text"
+                      value={selectedFile.filename}
+                      onChange={e => setSelectedFile({...selectedFile, filename: e.target.value})}
+                      className="w-full px-4 py-2.5 bg-white border border-[var(--stone-dark)] rounded-lg text-sm font-bold text-[var(--ink)] focus:border-[var(--gold)] outline-none"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-[9px] font-bold text-[var(--ink-light)] uppercase tracking-widest mb-1.5">URL</label>
+                    <div className="flex gap-2">
+                      <input 
+                        type="text"
+                        value={selectedFile.url}
+                        readOnly
+                        className="flex-1 px-4 py-2.5 bg-[var(--cream)] border border-[var(--stone-dark)] rounded-lg text-[10px] text-[var(--ink-mid)] outline-none"
+                      />
+                      <button 
+                        onClick={() => {
+                          navigator.clipboard.writeText(selectedFile.url);
+                          // We could add a toast here
+                        }}
+                        className="px-3 py-2 bg-white border border-[var(--stone-dark)] rounded-lg text-[10px] font-bold hover:bg-[var(--stone)] transition-colors"
+                      >
+                        Copy
+                      </button>
+                    </div>
+                  </div>
+
+                  <div>
+                    <label className="block text-[9px] font-bold text-[var(--ink-light)] uppercase tracking-widest mb-1.5">Alt Text</label>
+                    <input 
+                      type="text"
+                      value={selectedFile.altText || ''}
+                      placeholder="Describe image for accessibility..."
+                      onChange={e => setSelectedFile({...selectedFile, altText: e.target.value})}
+                      className="w-full px-4 py-2.5 bg-white border border-[var(--stone-dark)] rounded-lg text-sm text-[var(--ink)] focus:border-[var(--gold)] outline-none"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-[9px] font-bold text-[var(--ink-light)] uppercase tracking-widest mb-1.5">Caption</label>
+                    <textarea 
+                      value={selectedFile.caption || ''}
+                      placeholder="Enter a brief caption..."
+                      onChange={e => setSelectedFile({...selectedFile, caption: e.target.value})}
+                      className="w-full px-4 py-2.5 bg-white border border-[var(--stone-dark)] rounded-lg text-sm text-[var(--ink)] focus:border-[var(--gold)] outline-none min-h-[80px] resize-none"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-[9px] font-bold text-[var(--ink-light)] uppercase tracking-widest mb-1.5">Used In</label>
+                    <div className="flex flex-wrap gap-2">
+                      {(selectedFile.usedIn || ['Unassigned']).map((tag, i) => (
+                        <span key={i} className="px-3 py-1 bg-[var(--blue-light)] text-[var(--blue)] text-[10px] font-bold rounded-full uppercase">
+                          {tag}
+                        </span>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <div className="p-5 border-t border-[var(--stone-dark)] bg-[var(--cream-light)] rounded-b-2xl flex items-center justify-between gap-3">
+                <button 
+                  onClick={() => {
+                    if (confirm('Are you sure you want to delete this asset?')) {
+                      deleteItem(selectedFile.id);
+                      setSelectedFile(null);
+                    }
+                  }}
+                  className="flex items-center gap-2 px-4 py-2 text-[var(--red)] border border-[var(--red)] rounded-lg text-[10px] font-bold hover:bg-[var(--red-light)] transition-colors"
+                >
+                  <Icons.trash className="w-3 h-3" />
+                  Delete
+                </button>
+                <button 
+                  onClick={() => {
+                    updateItem(selectedFile.id, selectedFile);
+                    // Add success state/feedback
+                  }}
+                  className="px-6 py-2 bg-[var(--gold)] text-[var(--burgundy)] rounded-lg text-[10px] font-bold hover:bg-[var(--gold-dark)] transition-colors shadow-sm"
+                >
+                  Save Changes
+                </button>
               </div>
             </div>
-          </div>
-        )}
-      </Panel>
+          )}
+        </div>
+      </div>
     </DashboardLayout>
   );
 }

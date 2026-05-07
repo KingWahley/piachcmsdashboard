@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import DashboardLayout from '@/components/layout/DashboardLayout';
 import { Icons } from '@/components/shared/Icons';
 import StatusPill from '@/components/shared/StatusPill';
@@ -12,6 +12,7 @@ import { projectsStore, projectCategoriesStore } from '@/lib/store';
 import { useFilterSort } from '@/hooks/useFilterSort';
 import Link from 'next/link';
 import { useViewMode } from '@/hooks/useViewMode';
+import Pagination from '@/components/shared/Pagination';
 
 export default function ProjectsPage() {
   const { data, deleteItem } = useStore(projectsStore);
@@ -19,11 +20,27 @@ export default function ProjectsPage() {
   const { filteredAndSortedData, searchQuery, setSearchQuery, filters, updateFilter } = useFilterSort(data, { category: 'all' }, { key: 'date', order: 'desc' });
   
   const [view, setView] = useViewMode();
+  const [currentPage, setCurrentPage] = useState(1);
+  const pageSize = 7;
+
+  // Reset page when filters change
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchQuery, filters]);
 
   const filterOptions = [
     { value: 'all', label: 'All Categories' },
     ...projectCategories.map(c => ({ value: c.name, label: c.name }))
   ];
+
+  // Pagination logic
+  const totalPages = Math.ceil(filteredAndSortedData.length / pageSize);
+  const paginatedData = filteredAndSortedData.slice((currentPage - 1) * pageSize, currentPage * pageSize);
+
+  const handlePageChange = (page) => {
+    setCurrentPage(page);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
 
   return (
     <DashboardLayout title="Projects" subtitle="Manage portfolio projects, categories, and media galleries">
@@ -61,7 +78,7 @@ export default function ProjectsPage() {
           <EmptyState title="No projects found" message="Try a different search query or add a new project." />
         </div>
       ) : view === 'list' ? (
-        <div className="card">
+        <div className="card" style={{ marginBottom: '24px' }}>
           <div className="card-header" style={{ padding: '14px 18px', borderBottom: '1px solid var(--stone)', display: 'flex', alignItems: 'center', justifyContent: 'space-between', background: 'var(--cream)' }}>
             <span style={{ fontSize: '11px', fontWeight: 'bold', color: 'var(--burgundy)', textTransform: 'uppercase', letterSpacing: '0.07em' }}>List View</span>
             <Link href="/project-categories" style={{ fontSize: '10px', color: 'var(--gold-dark)', textDecoration: 'underline' }}>Manage categories →</Link>
@@ -79,7 +96,7 @@ export default function ProjectsPage() {
                 </tr>
               </thead>
               <tbody>
-                {filteredAndSortedData.map((project) => (
+                {paginatedData.map((project) => (
                   <tr key={project.id} style={{ borderBottom: '1px solid var(--stone)' }} className="table-row-hover">
                     <td style={{ padding: '14px 16px', verticalAlign: 'middle' }}>
                       <div style={{ fontWeight: 'bold', color: 'var(--ink)', fontSize: '12px' }}>{project.title}</div>
@@ -117,36 +134,51 @@ export default function ProjectsPage() {
               </tbody>
             </table>
           </div>
+          <Pagination 
+            currentPage={currentPage}
+            totalPages={totalPages}
+            onPageChange={handlePageChange}
+            totalItems={filteredAndSortedData.length}
+            pageSize={pageSize}
+          />
         </div>
       ) : (
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))', gap: '14px' }}>
-          {filteredAndSortedData.map((project) => (
-            <div key={project.id} style={{ border: '1px solid var(--stone-dark)', borderRadius: '8px', background: 'var(--white)', overflow: 'hidden' }}>
-              <div style={{ height: '118px', background: 'linear-gradient(135deg, var(--burgundy) 0%, var(--burgundy-mid) 45%, var(--gold-dark) 100%)', position: 'relative', display: 'flex', alignItems: 'flex-end', padding: '12px' }}>
-                <div style={{ position: 'relative', zIndex: 1, background: 'rgba(255,255,255,0.92)', color: 'var(--burgundy)', fontSize: '10px', padding: '4px 8px', borderRadius: '12px', fontWeight: 'bold' }}>
-                  {project.category}
+        <>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))', gap: '14px', marginBottom: '24px' }}>
+            {paginatedData.map((project) => (
+              <div key={project.id} style={{ border: '1px solid var(--stone-dark)', borderRadius: '8px', background: 'var(--white)', overflow: 'hidden' }}>
+                <div style={{ height: '118px', background: 'linear-gradient(135deg, var(--burgundy) 0%, var(--burgundy-mid) 45%, var(--gold-dark) 100%)', position: 'relative', display: 'flex', alignItems: 'flex-end', padding: '12px' }}>
+                  <div style={{ position: 'relative', zIndex: 1, background: 'rgba(255,255,255,0.92)', color: 'var(--burgundy)', fontSize: '10px', padding: '4px 8px', borderRadius: '12px', fontWeight: 'bold' }}>
+                    {project.category}
+                  </div>
+                </div>
+                <div style={{ padding: '13px' }}>
+                  <div style={{ fontSize: '13px', fontWeight: 'bold', color: 'var(--ink)', marginBottom: '5px' }}>{project.title}</div>
+                  <div style={{ fontSize: '10px', color: 'var(--ink-light)', marginBottom: '10px', display: 'flex', gap: '8px' }}>
+                    <StatusPill status={project.status} /> <span>{project.date}</span>
+                  </div>
+                  <div style={{ fontSize: '10px', color: 'var(--ink-mid)', lineHeight: '1.45', minHeight: '42px' }}>{project.description}</div>
+                </div>
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '11px 13px', borderTop: '1px solid var(--stone)', background: 'var(--cream)' }}>
+                   <div className="gallery-count" style={{ display: 'inline-flex', alignItems: 'center', gap: '5px', fontSize: '10px', color: 'var(--blue)', background: 'var(--blue-light)', padding: '4px 8px', borderRadius: '12px', fontWeight: 'bold' }}>
+                     <Icons.media style={{ width: '12px', height: '12px' }} /> {project.galleryCount || 0} images
+                   </div>
+                   <Link href={`/projects/${project.id}/edit`} style={{ textDecoration: 'none' }}>
+                     <button className="secondary-btn" style={{ padding: '6px 10px', fontSize: '10px' }}>Edit Project</button>
+                   </Link>
                 </div>
               </div>
-              <div style={{ padding: '13px' }}>
-                <div style={{ fontSize: '13px', fontWeight: 'bold', color: 'var(--ink)', marginBottom: '5px' }}>{project.title}</div>
-                <div style={{ fontSize: '10px', color: 'var(--ink-light)', marginBottom: '10px', display: 'flex', gap: '8px' }}>
-                  <StatusPill status={project.status} /> <span>{project.date}</span>
-                </div>
-                <div style={{ fontSize: '10px', color: 'var(--ink-mid)', lineHeight: '1.45', minHeight: '42px' }}>{project.description}</div>
-              </div>
-              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '11px 13px', borderTop: '1px solid var(--stone)', background: 'var(--cream)' }}>
-                 <div className="gallery-count" style={{ display: 'inline-flex', alignItems: 'center', gap: '5px', fontSize: '10px', color: 'var(--blue)', background: 'var(--blue-light)', padding: '4px 8px', borderRadius: '12px', fontWeight: 'bold' }}>
-                   <Icons.media style={{ width: '12px', height: '12px' }} /> {project.galleryCount || 0} images
-                 </div>
-                 <Link href={`/projects/${project.id}/edit`} style={{ textDecoration: 'none' }}>
-                   <button className="secondary-btn" style={{ padding: '6px 10px', fontSize: '10px' }}>Edit Project</button>
-                 </Link>
-              </div>
-            </div>
-          ))}
-        </div>
+            ))}
+          </div>
+          <Pagination 
+            currentPage={currentPage}
+            totalPages={totalPages}
+            onPageChange={handlePageChange}
+            totalItems={filteredAndSortedData.length}
+            pageSize={pageSize}
+          />
+        </>
       )}
-
     </DashboardLayout>
   );
 }

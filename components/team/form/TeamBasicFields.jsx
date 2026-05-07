@@ -55,25 +55,6 @@ export default function TeamBasicFields({ formData, handleChange, errors }) {
         />
         <div className="form-helper">Separate multiple qualifications with commas.</div>
       </div>
-      <div className="form-group">
-        <label>Email Address</label>
-        <input 
-          name="email" 
-          type="email"
-          placeholder="e.g. name@pieach.com" 
-          value={formData.email || ''} 
-          onChange={handleChange}
-        />
-      </div>
-      <div className="form-group">
-        <label>Phone Number</label>
-        <input 
-          name="phone" 
-          placeholder="e.g. +234 801 234 5678" 
-          value={formData.phone || ''} 
-          onChange={handleChange}
-        />
-      </div>
     </>
   );
 }

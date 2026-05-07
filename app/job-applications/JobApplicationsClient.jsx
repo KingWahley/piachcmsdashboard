@@ -9,6 +9,7 @@ import { useStore } from '@/hooks/useStore';
 import { jobApplicationsStore, vacanciesStore } from '@/lib/store';
 import { useFilterSort } from '@/hooks/useFilterSort';
 import { useSearchParams } from 'next/navigation';
+import Pagination from '@/components/shared/Pagination';
 
 export default function JobApplicationsClient() {
   const { data: applications, updateItem, deleteItem } = useStore(jobApplicationsStore);
@@ -17,6 +18,8 @@ export default function JobApplicationsClient() {
   const vacancyIdParam = searchParams.get('vacancy');
   
   const [reviewApp, setReviewApp] = useState(null);
+  const [currentPage, setCurrentPage] = useState(1);
+  const pageSize = 7;
 
   const { filteredAndSortedData, searchQuery, setSearchQuery, filters, updateFilter } = useFilterSort(
     applications, 
@@ -29,6 +32,11 @@ export default function JobApplicationsClient() {
       updateFilter('jobId', vacancyIdParam);
     }
   }, [vacancyIdParam]);
+
+  // Reset page when filters change
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchQuery, filters]);
 
   const handleReview = (app) => {
     if (reviewApp?.id === app.id) {
@@ -54,6 +62,15 @@ export default function JobApplicationsClient() {
     if (!dateStr) return '';
     const d = new Date(dateStr);
     return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+  };
+
+  // Pagination logic
+  const totalPages = Math.ceil(filteredAndSortedData.length / pageSize);
+  const paginatedData = filteredAndSortedData.slice((currentPage - 1) * pageSize, currentPage * pageSize);
+
+  const handlePageChange = (page) => {
+    setCurrentPage(page);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
   return (
@@ -132,94 +149,135 @@ export default function JobApplicationsClient() {
           transition: 'all 0.4s cubic-bezier(0.25, 0.8, 0.25, 1)'
         }}
       >
-        <div className="card" style={{ background: 'white', border: '1px solid var(--stone-dark)', borderRadius: '8px', overflow: 'hidden' }}>
-          <div className="card-header" style={{ padding: '16px 20px', borderBottom: '1px solid var(--stone)', display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: 'var(--cream)' }}>
-            <span style={{ fontSize: '11px', fontWeight: 'bold', letterSpacing: '0.08em', color: 'var(--ink)' }}>APPLICATION LIST</span>
-            <button style={{ background: 'none', border: 'none', color: 'var(--gold-dark)', fontSize: '11px', fontWeight: 'bold', textDecoration: 'underline', cursor: 'pointer' }}>Bulk actions ›</button>
-          </div>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+          <div className="card" style={{ background: 'white', border: '1px solid var(--stone-dark)', borderRadius: '8px', overflow: 'hidden' }}>
+            <div className="card-header" style={{ padding: '16px 20px', borderBottom: '1px solid var(--stone)', display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: 'var(--cream)' }}>
+              <span style={{ fontSize: '11px', fontWeight: 'bold', letterSpacing: '0.08em', color: 'var(--ink)' }}>APPLICATION LIST</span>
+              <button style={{ background: 'none', border: 'none', color: 'var(--gold-dark)', fontSize: '11px', fontWeight: 'bold', textDecoration: 'underline', cursor: 'pointer' }}>Bulk actions ›</button>
+            </div>
 
-          <div style={{ overflowX: 'auto' }}>
-            <table className="project-table" style={{ width: '100%', borderCollapse: 'collapse' }}>
-              <thead>
-                <tr style={{ borderBottom: '1px solid var(--stone-dark)' }}>
-                  <th style={{ textAlign: 'left', padding: '16px 20px', fontSize: '10px', fontWeight: 'bold', color: 'var(--burgundy)', textTransform: 'uppercase', background: 'var(--cream)', letterSpacing: '0.05em' }}>APPLICANT</th>
-                  <th style={{ textAlign: 'left', padding: '16px 20px', fontSize: '10px', fontWeight: 'bold', color: 'var(--burgundy)', textTransform: 'uppercase', background: 'var(--cream)', letterSpacing: '0.05em' }}>APPLIED ROLE</th>
-                  <th style={{ textAlign: 'left', padding: '16px 20px', fontSize: '10px', fontWeight: 'bold', color: 'var(--burgundy)', textTransform: 'uppercase', background: 'var(--cream)', letterSpacing: '0.05em' }}>DOCUMENTS</th>
-                  <th style={{ textAlign: 'left', padding: '16px 20px', fontSize: '10px', fontWeight: 'bold', color: 'var(--burgundy)', textTransform: 'uppercase', background: 'var(--cream)', letterSpacing: '0.05em' }}>STATUS</th>
-                  <th style={{ textAlign: 'left', padding: '16px 20px', fontSize: '10px', fontWeight: 'bold', color: 'var(--burgundy)', textTransform: 'uppercase', background: 'var(--cream)', letterSpacing: '0.05em' }}>DATE</th>
-                  <th style={{ textAlign: 'left', padding: '16px 20px', fontSize: '10px', fontWeight: 'bold', color: 'var(--burgundy)', textTransform: 'uppercase', background: 'var(--cream)', letterSpacing: '0.05em' }}>ACTION</th>
-                </tr>
-              </thead>
-              <tbody>
-                {filteredAndSortedData.length > 0 ? (
-                  filteredAndSortedData.map((app) => (
-                    <tr 
-                      key={app.id}
-                      onClick={() => handleReview(app)}
-                      style={{ borderBottom: '1px solid var(--stone)', cursor: 'pointer', background: reviewApp?.id === app.id ? '#FCFAF6' : 'transparent', transition: 'background 0.2s' }}
-                    >
-                      <td style={{ padding: '18px 20px' }}>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '14px' }}>
-                          <div style={{ width: '40px', height: '40px', background: 'var(--burgundy)', color: 'var(--gold)', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '13px', fontWeight: 'bold', flexShrink: 0 }}>
-                            {getInitials(app.applicantName || app.name)}
+            <div style={{ overflowX: 'auto' }}>
+              <table className="project-table" style={{ width: '100%', borderCollapse: 'collapse' }}>
+                <thead>
+                  <tr style={{ borderBottom: '1px solid var(--stone-dark)' }}>
+                    <th style={{ textAlign: 'left', padding: '16px 20px', fontSize: '10px', fontWeight: 'bold', color: 'var(--burgundy)', textTransform: 'uppercase', background: 'var(--cream)', letterSpacing: '0.05em' }}>APPLICANT</th>
+                    <th style={{ textAlign: 'left', padding: '16px 20px', fontSize: '10px', fontWeight: 'bold', color: 'var(--burgundy)', textTransform: 'uppercase', background: 'var(--cream)', letterSpacing: '0.05em' }}>APPLIED ROLE</th>
+                    <th style={{ textAlign: 'left', padding: '16px 20px', fontSize: '10px', fontWeight: 'bold', color: 'var(--burgundy)', textTransform: 'uppercase', background: 'var(--cream)', letterSpacing: '0.05em' }}>DOCUMENTS</th>
+                    <th style={{ textAlign: 'left', padding: '16px 20px', fontSize: '10px', fontWeight: 'bold', color: 'var(--burgundy)', textTransform: 'uppercase', background: 'var(--cream)', letterSpacing: '0.05em' }}>STATUS</th>
+                    <th style={{ textAlign: 'left', padding: '16px 20px', fontSize: '10px', fontWeight: 'bold', color: 'var(--burgundy)', textTransform: 'uppercase', background: 'var(--cream)', letterSpacing: '0.05em' }}>DATE</th>
+                    <th style={{ textAlign: 'left', padding: '16px 20px', fontSize: '10px', fontWeight: 'bold', color: 'var(--burgundy)', textTransform: 'uppercase', background: 'var(--cream)', letterSpacing: '0.05em' }}>ACTION</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {paginatedData.length > 0 ? (
+                    paginatedData.map((app) => (
+                      <tr 
+                        key={app.id}
+                        onClick={() => handleReview(app)}
+                        style={{ borderBottom: '1px solid var(--stone)', cursor: 'pointer', background: reviewApp?.id === app.id ? '#FCFAF6' : 'transparent', transition: 'background 0.2s' }}
+                      >
+                        <td style={{ padding: '18px 20px' }}>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '14px' }}>
+                            <div style={{ width: '40px', height: '40px', background: 'var(--burgundy)', color: 'var(--gold)', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '13px', fontWeight: 'bold', flexShrink: 0 }}>
+                              {getInitials(app.applicantName || app.name)}
+                            </div>
+                            <div>
+                              <div style={{ fontSize: '14px', fontWeight: 'bold', color: 'var(--burgundy)' }}>{app.applicantName || app.name}</div>
+                              <div style={{ fontSize: '11px', color: 'var(--ink-light)', marginTop: '2px' }}>{app.email}</div>
+                            </div>
                           </div>
-                          <div>
-                            <div style={{ fontSize: '14px', fontWeight: 'bold', color: 'var(--burgundy)' }}>{app.applicantName || app.name}</div>
-                            <div style={{ fontSize: '11px', color: 'var(--ink-light)', marginTop: '2px' }}>{app.email}</div>
+                        </td>
+                        <td style={{ padding: '18px 20px' }}>
+                          <span style={{ display: 'inline-block', padding: '6px 12px', background: 'var(--blue-light)', color: 'var(--blue)', borderRadius: '15px', fontSize: '11px', fontWeight: 'bold' }}>
+                            {app.roleApplied || app.role}
+                          </span>
+                        </td>
+                        <td style={{ padding: '18px 20px' }}>
+                          <div style={{ display: 'flex', gap: '8px' }}>
+                            {/* CV Badge */}
+                            <div className="doc-badge-container" onClick={(e) => e.stopPropagation()}>
+                              <div style={{ display: 'flex', alignItems: 'center', gap: '5px', padding: '5px 10px', background: 'var(--gold-light)', border: '1px solid var(--gold)', borderRadius: '5px' }}>
+                                <Icons.document style={{ width: '12px', height: '12px', color: 'var(--gold-dark)' }} />
+                                <span style={{ fontSize: '10px', fontWeight: 'bold', color: 'var(--gold-dark)', textTransform: 'uppercase' }}>CV</span>
+                              </div>
+                              <div className="doc-actions">
+                                <button className="action-mini-btn" title="View CV" onClick={(e) => { e.stopPropagation(); window.open(app.cvUrl || '#', '_blank'); }}>
+                                  <Icons.eye style={{ width: '12px', height: '12px' }} />
+                                </button>
+                                <a 
+                                  href={app.cvUrl || '#'} 
+                                  download 
+                                  className="action-mini-btn" 
+                                  title="Download CV"
+                                  onClick={(e) => e.stopPropagation()}
+                                >
+                                  <Icons.download style={{ width: '12px', height: '12px' }} />
+                                </a>
+                              </div>
+                            </div>
+
+                            {/* CL Badge */}
+                            <div className="doc-badge-container" onClick={(e) => e.stopPropagation()}>
+                              <div style={{ display: 'flex', alignItems: 'center', gap: '5px', padding: '5px 10px', background: 'var(--gold-light)', border: '1px solid var(--gold)', borderRadius: '5px' }}>
+                                <Icons.messages style={{ width: '12px', height: '12px', color: 'var(--gold-dark)' }} />
+                                <span style={{ fontSize: '10px', fontWeight: 'bold', color: 'var(--gold-dark)', textTransform: 'uppercase' }}>CL</span>
+                              </div>
+                              <div className="doc-actions">
+                                <button className="action-mini-btn" title="View Cover Letter" onClick={(e) => { e.stopPropagation(); window.open(app.clUrl || '#', '_blank'); }}>
+                                  <Icons.eye style={{ width: '12px', height: '12px' }} />
+                                </button>
+                                <a 
+                                  href={app.clUrl || '#'} 
+                                  download 
+                                  className="action-mini-btn" 
+                                  title="Download Cover Letter"
+                                  onClick={(e) => e.stopPropagation()}
+                                >
+                                  <Icons.download style={{ width: '12px', height: '12px' }} />
+                                </a>
+                              </div>
+                            </div>
                           </div>
-                        </div>
-                      </td>
-                      <td style={{ padding: '18px 20px' }}>
-                        <span style={{ display: 'inline-block', padding: '6px 12px', background: 'var(--blue-light)', color: 'var(--blue)', borderRadius: '15px', fontSize: '11px', fontWeight: 'bold' }}>
-                          {app.roleApplied || app.role}
-                        </span>
-                      </td>
-                      <td style={{ padding: '18px 20px' }}>
-                        <div style={{ display: 'flex', gap: '8px' }}>
-                          <div style={{ display: 'flex', alignItems: 'center', gap: '5px', padding: '5px 10px', background: 'var(--gold-light)', border: '1px solid var(--gold)', borderRadius: '5px', width: 'fit-content' }}>
-                            <Icons.document style={{ width: '12px', height: '12px', color: 'var(--gold-dark)' }} />
-                            <span style={{ fontSize: '10px', fontWeight: 'bold', color: 'var(--gold-dark)', textTransform: 'uppercase' }}>CV</span>
+                        </td>
+                        <td style={{ padding: '18px 20px' }}>
+                          <StatusPill status={app.status} />
+                        </td>
+                        <td style={{ padding: '18px 20px' }}>
+                          <div style={{ fontSize: '12px', color: 'var(--ink-mid)' }}>{formatDate(app.date || app.dateApplied)}</div>
+                        </td>
+                        <td style={{ padding: '18px 20px' }}>
+                          <div style={{ display: 'flex', gap: '8px' }}>
+                            <button className="icon-btn-bordered" title="View Application" onClick={(e) => { e.stopPropagation(); handleReview(app); }}>
+                              <Icons.eye style={{ width: '16px', height: '16px' }} />
+                            </button>
+                            <button className="icon-btn-bordered" style={{ color: 'var(--green)' }} onClick={(e) => { e.stopPropagation(); updateItem(app.id, { status: 'shortlisted' }); }}>
+                              <Icons.check style={{ width: '16px', height: '16px' }} />
+                            </button>
+                            <button className="icon-btn-bordered" style={{ color: 'var(--red)' }} onClick={(e) => { e.stopPropagation(); updateItem(app.id, { status: 'rejected' }); }}>
+                              <Icons.close style={{ width: '16px', height: '16px' }} />
+                            </button>
                           </div>
-                          <div style={{ display: 'flex', alignItems: 'center', gap: '5px', padding: '5px 10px', background: 'var(--gold-light)', border: '1px solid var(--gold)', borderRadius: '5px', width: 'fit-content' }}>
-                            <Icons.messages style={{ width: '12px', height: '12px', color: 'var(--gold-dark)' }} />
-                            <span style={{ fontSize: '10px', fontWeight: 'bold', color: 'var(--gold-dark)', textTransform: 'uppercase' }}>CL</span>
-                          </div>
-                        </div>
-                      </td>
-                      <td style={{ padding: '18px 20px' }}>
-                        <StatusPill status={app.status} />
-                      </td>
-                      <td style={{ padding: '18px 20px' }}>
-                        <div style={{ fontSize: '12px', color: 'var(--ink-mid)' }}>{formatDate(app.date || app.dateApplied)}</div>
-                      </td>
-                      <td style={{ padding: '18px 20px' }}>
-                        <div style={{ display: 'flex', gap: '8px' }}>
-                          <button className="icon-btn-bordered" title="View Application" onClick={(e) => { e.stopPropagation(); handleReview(app); }}>
-                            <Icons.eye style={{ width: '16px', height: '16px' }} />
-                          </button>
-                          <button className="icon-btn-bordered" title="Download CV">
-                            <Icons.download style={{ width: '16px', height: '16px' }} />
-                          </button>
-                          <button className="icon-btn-bordered" style={{ color: 'var(--green)' }} onClick={(e) => { e.stopPropagation(); updateItem(app.id, { status: 'shortlisted' }); }}>
-                            <Icons.check style={{ width: '16px', height: '16px' }} />
-                          </button>
-                          <button className="icon-btn-bordered" style={{ color: 'var(--red)' }} onClick={(e) => { e.stopPropagation(); updateItem(app.id, { status: 'rejected' }); }}>
-                            <Icons.close style={{ width: '16px', height: '16px' }} />
-                          </button>
-                        </div>
+                        </td>
+                      </tr>
+                    ))
+                  ) : (
+                    <tr>
+                      <td colSpan="6">
+                        <EmptyState title="No applications found matching your criteria" />
                       </td>
                     </tr>
-                  ))
-                ) : (
-                  <tr>
-                    <td colSpan="6">
-                      <EmptyState title="No applications found matching your criteria" />
-                    </td>
-                  </tr>
-                )}
-              </tbody>
-            </table>
+                  )}
+                </tbody>
+              </table>
+            </div>
           </div>
+          <Pagination 
+            currentPage={currentPage}
+            totalPages={totalPages}
+            onPageChange={handlePageChange}
+            totalItems={filteredAndSortedData.length}
+            pageSize={pageSize}
+          />
         </div>
 
         {/* Side Review Panel */}
@@ -333,6 +391,71 @@ export default function JobApplicationsClient() {
           color: var(--burgundy);
           transform: translateY(-1px);
           box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+        }
+        .doc-badge-container {
+          position: relative;
+        }
+        .doc-actions {
+          position: absolute;
+          bottom: 100%;
+          left: 50%;
+          transform: translateX(-50%) translateY(10px);
+          margin-bottom: 8px;
+          background: white;
+          border: 1px solid var(--stone-dark);
+          border-radius: 6px;
+          padding: 4px;
+          display: flex;
+          opacity: 0;
+          visibility: hidden;
+          gap: 4px;
+          box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+          z-index: 10;
+          transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+          pointer-events: none;
+        }
+        .doc-actions::before {
+          content: '';
+          position: absolute;
+          top: 100%;
+          left: 0;
+          right: 0;
+          height: 12px;
+          background: transparent;
+        }
+        .doc-actions::after {
+          content: '';
+          position: absolute;
+          top: 100%;
+          left: 50%;
+          transform: translateX(-50%);
+          border-width: 5px;
+          border-style: solid;
+          border-color: white transparent transparent transparent;
+        }
+        .doc-badge-container:hover .doc-actions {
+          opacity: 1;
+          visibility: visible;
+          transform: translateX(-50%) translateY(0);
+          pointer-events: auto;
+        }
+        .action-mini-btn {
+          width: 28px;
+          height: 28px;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          background: white;
+          border: 1px solid var(--stone);
+          border-radius: 4px;
+          cursor: pointer;
+          color: var(--ink-mid);
+          transition: all 0.2s;
+        }
+        .action-mini-btn:hover {
+          background: var(--cream);
+          color: var(--burgundy);
+          border-color: var(--gold);
         }
       `}</style>
     </DashboardLayout>

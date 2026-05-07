@@ -1,6 +1,6 @@
 'use client';
 
-import React from 'react';
+import React, { useState } from 'react';
 import DashboardLayout from '@/components/layout/DashboardLayout';
 import { useAppointments } from '@/hooks/useAppointments';
 import AppointmentFilters from '@/components/appointments/AppointmentFilters';
@@ -8,6 +8,7 @@ import AppointmentTable from '@/components/appointments/AppointmentTable';
 import AppointmentCalendar from '@/components/appointments/AppointmentCalendar';
 import AppointmentReviewPanel from '@/components/appointments/AppointmentReviewPanel';
 import { Icons } from '@/components/shared/Icons';
+import Pagination from '@/components/shared/Pagination';
 
 export default function AppointmentsListPage() {
   const {
@@ -22,6 +23,23 @@ export default function AppointmentsListPage() {
     setSelectedAppointmentId,
     handleStatusChange
   } = useAppointments();
+
+  const [currentPage, setCurrentPage] = useState(1);
+  const pageSize = 7;
+
+  // Pagination logic
+  const totalPages = Math.ceil(filteredAppointments.length / pageSize);
+  const paginatedAppointments = filteredAppointments.slice((currentPage - 1) * pageSize, currentPage * pageSize);
+
+  const handlePageChange = (page) => {
+    setCurrentPage(page);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
+  // Reset page when filters change
+  React.useEffect(() => {
+    setCurrentPage(1);
+  }, [filterConfig]);
 
   return (
     <DashboardLayout 
@@ -52,13 +70,22 @@ export default function AppointmentsListPage() {
 
         <div className="relative">
           {viewMode === 'list' ? (
-            <AppointmentTable 
-              appointments={filteredAppointments} 
-              onSelectAppointment={setSelectedAppointmentId}
-              selectedAppointmentId={selectedAppointmentId}
-              onStatusChange={handleStatusChange}
-              onToggleView={setViewMode}
-            />
+            <>
+              <AppointmentTable 
+                appointments={paginatedAppointments} 
+                onSelectAppointment={setSelectedAppointmentId}
+                selectedAppointmentId={selectedAppointmentId}
+                onStatusChange={handleStatusChange}
+                onToggleView={setViewMode}
+              />
+              <Pagination 
+                currentPage={currentPage}
+                totalPages={totalPages}
+                onPageChange={handlePageChange}
+                totalItems={filteredAppointments.length}
+                pageSize={pageSize}
+              />
+            </>
           ) : (
             <AppointmentCalendar 
               events={calendarEvents} 

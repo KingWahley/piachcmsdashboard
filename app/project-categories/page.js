@@ -7,6 +7,7 @@ import { useStore } from '@/hooks/useStore';
 import { projectCategoriesStore, projectsStore } from '@/lib/store';
 import { useFilterSort } from '@/hooks/useFilterSort';
 import SearchToolbar from '@/components/shared/SearchToolbar';
+import Pagination from '@/components/shared/Pagination';
 
 export default function ProjectCategoriesPage() {
   const { data, createItem, updateItem, deleteItem } = useStore(projectCategoriesStore);
@@ -15,6 +16,22 @@ export default function ProjectCategoriesPage() {
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [editingId, setEditingId] = useState(null);
   const [formData, setFormData] = useState({ name: '', slug: '', description: '', status: 'Active' });
+  const [currentPage, setCurrentPage] = useState(1);
+  const pageSize = 7;
+
+  // Pagination logic
+  const totalPages = Math.ceil(filteredAndSortedData.length / pageSize);
+  const paginatedData = filteredAndSortedData.slice((currentPage - 1) * pageSize, currentPage * pageSize);
+
+  const handlePageChange = (page) => {
+    setCurrentPage(page);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
+  // Reset page when search changes
+  React.useEffect(() => {
+    setCurrentPage(1);
+  }, [searchQuery]);
 
   const toggleForm = () => {
     if (isFormOpen) {
@@ -153,7 +170,7 @@ export default function ProjectCategoriesPage() {
                 </tr>
               </thead>
               <tbody>
-                {filteredAndSortedData.map((cat) => (
+                {paginatedData.map((cat) => (
                   <tr key={cat.id}>
                     <td>
                       <div className="project-title">{cat.name}</div>
@@ -187,6 +204,13 @@ export default function ProjectCategoriesPage() {
                 )}
               </tbody>
             </table>
+            <Pagination 
+              currentPage={currentPage}
+              totalPages={totalPages}
+              onPageChange={handlePageChange}
+              totalItems={filteredAndSortedData.length}
+              pageSize={pageSize}
+            />
           </div>
         </div>
       </div>
