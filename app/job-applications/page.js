@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, Suspense } from 'react';
 import DashboardLayout from '@/components/layout/DashboardLayout';
 import { Icons } from '@/components/shared/Icons';
 import StatusPill from '@/components/shared/StatusPill';
@@ -10,7 +10,7 @@ import { jobApplicationsStore, vacanciesStore } from '@/lib/store';
 import { useFilterSort } from '@/hooks/useFilterSort';
 import { useSearchParams } from 'next/navigation';
 
-export default function JobApplicationsPage() {
+function JobApplicationsContent() {
   const { data: applications, updateItem, deleteItem } = useStore(jobApplicationsStore);
   const { data: vacancies } = useStore(vacanciesStore);
   const searchParams = useSearchParams();
@@ -336,5 +336,19 @@ export default function JobApplicationsPage() {
         }
       `}</style>
     </DashboardLayout>
+  );
+}
+
+export default function JobApplicationsPage() {
+  return (
+    <Suspense fallback={
+      <DashboardLayout title="Job Applications" subtitle="Loading applications...">
+        <div style={{ padding: '40px', textAlign: 'center', color: 'var(--ink-light)' }}>
+          Loading application data...
+        </div>
+      </DashboardLayout>
+    }>
+      <JobApplicationsContent />
+    </Suspense>
   );
 }

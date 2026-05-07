@@ -28,12 +28,18 @@ export default function AppointmentsListPage() {
       subtitle="View, manage, and approve or reject appointment bookings"
     >
       <div className="max-w-[1400px] mx-auto">
-        <div className="page-head mb-8">
+        <div className="page-head mb-8" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
           <div className="page-title-wrap">
             <h1 className="text-4xl font-bold tracking-tight text-[var(--burgundy)] mb-3">Appointments</h1>
             <p className="text-sm text-[var(--ink-light)] font-medium">
               Manage appointment bookings, approvals, and scheduling.
             </p>
+          </div>
+          <div style={{ display: 'flex', gap: '10px' }}>
+            <a href="/appointments/manage" className="secondary-btn" style={{ textDecoration: 'none' }}>
+              <Icons.calendar style={{ width: '16px', height: '16px' }} />
+              Manage Schedule
+            </a>
           </div>
         </div>
 
