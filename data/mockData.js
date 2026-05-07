@@ -377,19 +377,23 @@ export const blogCategoriesData = [
 export const mediaData = [
   {
     id: 'm1',
-    filename: 'vertex-tower-render-01.jpg',
+    filename: 'lekki-courtyard-hero.jpg',
     type: 'image/jpeg',
-    size: '4.2 MB',
-    dateAdded: '2026-05-02',
-    url: 'https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?w=800&q=80'
+    size: '1.8 MB',
+    dateAdded: '2026-05-05',
+    url: 'https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?w=800&q=80',
+    usage: 'Project',
+    dimensions: '1920×1080'
   },
   {
     id: 'm2',
-    filename: 'lumina-interior-lobby.png',
+    filename: 'team-adaora-okeke.png',
     type: 'image/png',
-    size: '8.1 MB',
-    dateAdded: '2026-05-01',
-    url: 'https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?w=800&q=80'
+    size: '820 KB',
+    dateAdded: '2026-05-03',
+    url: 'https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?w=800&q=80',
+    usage: 'Team',
+    dimensions: '900×900'
   },
   {
     id: 'm3',
@@ -397,7 +401,9 @@ export const mediaData = [
     type: 'application/pdf',
     size: '12.5 MB',
     dateAdded: '2026-04-28',
-    url: ''
+    url: '',
+    usage: 'Project',
+    dimensions: '---'
   }
 ];
 
