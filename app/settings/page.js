@@ -53,11 +53,11 @@ export default function SettingsPage() {
                   theme === 'light' ? 'border-[var(--gold)] ring-2 ring-[var(--gold-light)]' : 'border-[var(--stone-dark)] hover:border-[var(--ink-light)]'
                 }`}
               >
-                <div className="h-24 bg-[#F9FAFB] p-4 flex gap-2">
-                  <div className="w-8 h-full bg-[#FFFFFF] border border-[#E5E7EB] rounded"></div>
+                <div className="h-24 bg-[#FDFDFD] p-4 flex gap-2">
+                  <div className="w-8 h-full bg-[#FFFFFF] border border-[#EAEAEA] rounded"></div>
                   <div className="flex-1 flex flex-col gap-2">
-                    <div className="h-4 bg-[#3B82F6] rounded w-1/2"></div>
-                    <div className="h-2 bg-[#111827] rounded w-3/4"></div>
+                    <div className="h-4 bg-[#A67C52] rounded w-1/2"></div>
+                    <div className="h-2 bg-[#1A1A1A] rounded w-3/4"></div>
                   </div>
                 </div>
                 <div className="p-4 bg-[var(--white)]">

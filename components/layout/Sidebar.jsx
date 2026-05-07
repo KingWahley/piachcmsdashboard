@@ -1,10 +1,11 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { MAIN_NAV, CAREERS_NAV, SYSTEM_NAV } from '@/constants/navigation';
 import { Icons } from '@/components/shared/Icons';
+import Lenis from '@studio-freight/lenis';
 
 import { useStore } from '@/hooks/useStore';
 import { 
@@ -18,6 +19,30 @@ import {
 export default function Sidebar() {
   const pathname = usePathname();
   const [openGroups, setOpenGroups] = useState({});
+  const sidebarRef = useRef(null);
+
+  useEffect(() => {
+    if (!sidebarRef.current) return;
+
+    const lenis = new Lenis({
+      wrapper: sidebarRef.current,
+      content: sidebarRef.current,
+      duration: 1.2,
+      easing: (t) => Math.min(1, 1.001 - Math.pow(2, -10 * t)),
+      smoothWheel: true,
+    });
+
+    function raf(time) {
+      lenis.raf(time);
+      requestAnimationFrame(raf);
+    }
+
+    requestAnimationFrame(raf);
+
+    return () => {
+      lenis.destroy();
+    };
+  }, []);
 
   const { data: projects } = useStore(projectsStore);
   const { data: messages } = useStore(messagesStore);
@@ -108,7 +133,7 @@ export default function Sidebar() {
   };
 
   return (
-    <aside className="sidebar">
+    <aside className="sidebar" data-lenis-prevent ref={sidebarRef}>
       <Link href="/dashboard" className="sidebar-logo" style={{ textDecoration: 'none' }}>
         <div className="logo-mark" style={{ background: 'transparent' }}>
           <img 
