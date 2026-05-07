@@ -1,3 +1,5 @@
+'use client';
+
 import React, { useState, useRef } from 'react';
 import DashboardLayout from '@/components/layout/DashboardLayout';
 import { Icons } from '@/components/shared/Icons';

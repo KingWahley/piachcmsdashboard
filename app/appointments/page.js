@@ -7,6 +7,7 @@ import AppointmentFilters from '@/components/appointments/AppointmentFilters';
 import AppointmentTable from '@/components/appointments/AppointmentTable';
 import AppointmentCalendar from '@/components/appointments/AppointmentCalendar';
 import AppointmentReviewPanel from '@/components/appointments/AppointmentReviewPanel';
+import { Icons } from '@/components/shared/Icons';
 
 export default function AppointmentsListPage() {
   const {
