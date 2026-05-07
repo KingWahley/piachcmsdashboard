@@ -13,6 +13,16 @@ export default function ProjectBasicFields({ formData, handleChange, errors }) {
           value={formData.title} 
           onChange={handleChange}
           style={errors.title ? { borderColor: 'var(--red)' } : {}}
+          />
+      </div>
+      <div className="form-field full">
+        <label htmlFor="subtitle">Subtitle</label>
+        <input 
+          id="subtitle"
+          name="subtitle"
+          placeholder="Enter a brief subtitle or tagline" 
+          value={formData.subtitle} 
+          onChange={handleChange}
         />
       </div>
       <div className="form-field">

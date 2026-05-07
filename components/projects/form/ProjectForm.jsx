@@ -18,6 +18,7 @@ export default function ProjectForm({ mode = 'create', initialData = null, onSub
     state: initialData?.state || '',
     country: initialData?.country || '',
     category: initialData?.category || '',
+    subtitle: initialData?.subtitle || '',
     description: initialData?.description || ''
   });
 

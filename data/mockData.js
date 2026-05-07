@@ -157,6 +157,7 @@ export const teamData = [
 export const jobApplicationsData = [
   {
     id: 'app1',
+    jobId: 'v2',
     applicantName: 'Michael Chen',
     roleApplied: 'Junior Architect',
     date: '2026-05-04',
@@ -170,6 +171,7 @@ export const jobApplicationsData = [
   },
   {
     id: 'app2',
+    jobId: 'v4',
     applicantName: 'Sarah Jenkins',
     roleApplied: 'Interior Designer',
     date: '2026-05-02',
@@ -183,6 +185,7 @@ export const jobApplicationsData = [
   },
   {
     id: 'app3',
+    jobId: 'v1',
     applicantName: 'Robert Adebayo',
     roleApplied: 'Senior Project Manager',
     date: '2026-04-28',
@@ -196,6 +199,7 @@ export const jobApplicationsData = [
   },
   {
     id: 'app4',
+    jobId: 'v2', // Another one for Junior Architect or 3D Visualizer?
     applicantName: 'Elena Rostova',
     roleApplied: '3D Visualizer',
     date: '2026-04-25',
@@ -292,6 +296,22 @@ export const vacanciesData = [
     skills: [
       { title: '3ds Max / V-Ray', description: 'Expertise in high-end architectural rendering.' },
       { title: 'Unreal Engine 5', description: 'Experience with real-time architectural visualization.' }
+    ]
+  },
+  {
+    id: 'v4',
+    title: 'Interior Designer',
+    department: 'Design',
+    location: 'Lagos, Nigeria',
+    type: 'Full-time',
+    status: 'published',
+    applicantsCount: 8,
+    datePosted: '2026-05-02',
+    deadline: '2026-08-15',
+    description: 'We are seeking a creative Interior Designer to lead high-end residential interiors.',
+    skills: [
+      { title: 'Interior Styling', description: 'Curating materials, finishes, and furniture.' },
+      { title: 'AutoCAD', description: 'Precision technical drafting for interior layouts.' }
     ]
   }
 ];

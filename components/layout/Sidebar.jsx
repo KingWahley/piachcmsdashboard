@@ -110,7 +110,13 @@ export default function Sidebar() {
   return (
     <aside className="sidebar">
       <Link href="/dashboard" className="sidebar-logo" style={{ textDecoration: 'none' }}>
-        <div className="logo-mark">P</div>
+        <div className="logo-mark" style={{ background: 'transparent' }}>
+          <img 
+            src="/images/logo.png" 
+            alt="Pieach Logo" 
+            style={{ width: '100%', height: '100%', objectFit: 'cover', borderRadius: '4px' }} 
+          />
+        </div>
         <div>
           <div className="logo-name">Pieach</div>
           <div className="logo-sub">Admin CMS</div>

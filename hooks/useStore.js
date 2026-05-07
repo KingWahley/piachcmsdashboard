@@ -6,10 +6,6 @@ export function useStore(storeApi) {
   const [data, setData] = useState(storeApi.getData());
 
   useEffect(() => {
-    if (storeApi.rehydrate) {
-      storeApi.rehydrate();
-    }
-    
     const unsubscribe = storeApi.subscribe((newData) => {
       setData(newData);
     });

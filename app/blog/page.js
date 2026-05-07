@@ -54,7 +54,7 @@ export default function BlogPage() {
         </div>
 
         <button 
-          onClick={() => handleEdit({ id: 'new', title: '', excerpt: '', category: '', author: 'Admin', date: new Date().toISOString().split('T')[0], status: 'draft', reads: 0, image: '' })}
+          onClick={() => handleEdit({ id: 'new', title: '', excerpt: '', category: '', author: 'Admin', date: new Date().toISOString().split('T')[0], status: 'draft', reads: 0, image: '', content: '', tags: [], seoTitle: '', metaDescription: '', slug: '' })}
           className="bg-[#32171B] text-white px-6 py-3 rounded-md text-xs font-bold hover:bg-[#4a2228] transition-all flex items-center gap-2 shadow-sm"
         >
           <Icons.plus className="w-4 h-4" />
@@ -306,6 +306,57 @@ export default function BlogPage() {
                 onChange={e => setSelectedPost({...selectedPost, image: e.target.value})} 
                 className="w-full px-4 py-3 bg-[#FAF7F2] border border-[#DDD5C8] rounded-md text-sm outline-none focus:border-[#D5A73F]"
               />
+            </div>
+
+            <div className="flex flex-col gap-2">
+              <label className="text-[10px] font-bold text-[#32171B] uppercase tracking-wider">Full Content</label>
+              <textarea 
+                value={selectedPost.content} 
+                onChange={e => setSelectedPost({...selectedPost, content: e.target.value})} 
+                className="w-full px-4 py-3 bg-[#FAF7F2] border border-[#DDD5C8] rounded-md text-sm outline-none focus:border-[#D5A73F] min-h-[200px] resize-vertical"
+              />
+            </div>
+
+            <div className="flex flex-col gap-2">
+              <label className="text-[10px] font-bold text-[#32171B] uppercase tracking-wider">Tags (comma separated)</label>
+              <input 
+                type="text" 
+                value={Array.isArray(selectedPost.tags) ? selectedPost.tags.join(', ') : selectedPost.tags} 
+                onChange={e => setSelectedPost({...selectedPost, tags: e.target.value.split(',').map(t => t.trim())})} 
+                className="w-full px-4 py-3 bg-[#FAF7F2] border border-[#DDD5C8] rounded-md text-sm outline-none focus:border-[#D5A73F]"
+              />
+            </div>
+
+            <div className="border-t border-[#DDD5C8] pt-6 mt-2">
+              <h3 className="text-[11px] font-bold text-[#32171B] uppercase tracking-widest mb-4">SEO & Metadata</h3>
+              <div className="flex flex-col gap-4">
+                <div className="flex flex-col gap-2">
+                  <label className="text-[10px] font-bold text-[#32171B] uppercase tracking-wider">SEO Title</label>
+                  <input 
+                    type="text" 
+                    value={selectedPost.seoTitle} 
+                    onChange={e => setSelectedPost({...selectedPost, seoTitle: e.target.value})} 
+                    className="w-full px-4 py-3 bg-[#FAF7F2] border border-[#DDD5C8] rounded-md text-sm outline-none focus:border-[#D5A73F]"
+                  />
+                </div>
+                <div className="flex flex-col gap-2">
+                  <label className="text-[10px] font-bold text-[#32171B] uppercase tracking-wider">Meta Description</label>
+                  <textarea 
+                    value={selectedPost.metaDescription} 
+                    onChange={e => setSelectedPost({...selectedPost, metaDescription: e.target.value})} 
+                    className="w-full px-4 py-3 bg-[#FAF7F2] border border-[#DDD5C8] rounded-md text-sm outline-none focus:border-[#D5A73F] min-h-[80px] resize-none"
+                  />
+                </div>
+                <div className="flex flex-col gap-2">
+                  <label className="text-[10px] font-bold text-[#32171B] uppercase tracking-wider">URL Slug</label>
+                  <input 
+                    type="text" 
+                    value={selectedPost.slug} 
+                    onChange={e => setSelectedPost({...selectedPost, slug: e.target.value})} 
+                    className="w-full px-4 py-3 bg-[#FAF7F2] border border-[#DDD5C8] rounded-md text-sm outline-none focus:border-[#D5A73F]"
+                  />
+                </div>
+              </div>
             </div>
           </div>
         )}

@@ -13,6 +13,8 @@ export default function CalendarPage() {
   const { data: appointments, updateItem } = useStore(appointmentsStore);
   
   const [selectedDate, setSelectedDate] = useState(new Date());
+  const [calendarDate, setCalendarDate] = useState(new Date());
+  const [calendarView, setCalendarView] = useState('month');
   const [selectedAppt, setSelectedAppt] = useState(null);
 
   // Transform appointments for the calendar component
@@ -47,6 +49,19 @@ export default function CalendarPage() {
     return appointments.filter(appt => isSameDay(new Date(appt.preferredDate), selectedDate));
   }, [appointments, selectedDate]);
 
+  const handleNavigate = (newDate) => {
+    setCalendarDate(newDate);
+  };
+
+  const handleViewChange = (newView) => {
+    setCalendarView(newView);
+  };
+
+  const handleSelectSlot = (date) => {
+    setSelectedDate(date);
+    setCalendarDate(date); // Keep calendar in sync when selecting a day
+  };
+
   const handleStatusChange = (id, newStatus, additionalData = {}) => {
     updateItem(id, { 
       status: newStatus,
@@ -62,38 +77,36 @@ export default function CalendarPage() {
 
   return (
     <DashboardLayout title="Calendar View" subtitle="Review appointments by date, status, and schedule availability">
-      <div className="flex flex-col lg:flex-row gap-6 h-[calc(100vh-180px)]">
+      <div className="flex flex-col lg:flex-row gap-6">
         {/* Main Calendar Area */}
         <div className="flex-1 flex flex-col min-w-0">
           <div className="bg-white rounded-t border border-[rgba(0,0,0,0.05)] border-b-0 p-4 flex justify-between items-center">
             <h2 className="text-[11px] uppercase tracking-widest font-bold text-[var(--ink-light)]">Calendar View</h2>
             <div className="text-[11px] text-[var(--gold)] font-bold cursor-pointer hover:underline">List view →</div>
           </div>
-          <div className="flex-1 min-h-0">
+          <div className="bg-white border border-[rgba(0,0,0,0.05)]">
             <AppointmentCalendar 
               events={events}
               onSelectAppointment={(id) => setSelectedAppt(appointments.find(a => a.id === id))}
-              onSelectDay={(date) => setSelectedDate(date)}
+              onSelectDay={handleSelectSlot}
               selectedDate={selectedDate}
+              date={calendarDate}
+              onNavigate={handleNavigate}
+              view={calendarView}
+              onView={handleViewChange}
               selectedAppointmentId={selectedAppt?.id}
             />
           </div>
         </div>
 
         {/* Side Panel: Selected Day Schedule */}
-        <div className="w-full lg:w-[350px] bg-white rounded border border-[rgba(0,0,0,0.05)] shadow-sm flex flex-col overflow-hidden">
-          <div className="bg-[var(--burgundy)] p-3 flex justify-between items-center text-white">
-            <h3 className="text-[10px] uppercase tracking-widest font-bold">Selected Day Schedule</h3>
-            <span className="text-[10px] opacity-70 cursor-pointer hover:opacity-100">View all →</span>
-          </div>
-          <div className="flex-1 overflow-hidden">
-            <AppointmentDayPanel 
-              selectedDate={selectedDate}
-              appointments={dayAppointments}
-              onViewAppointment={setSelectedAppt}
-              onStatusChange={handleStatusChange}
-            />
-          </div>
+        <div className="w-full lg:w-[400px]">
+          <AppointmentDayPanel 
+            selectedDate={selectedDate}
+            appointments={dayAppointments}
+            onViewAppointment={setSelectedAppt}
+            onStatusChange={handleStatusChange}
+          />
         </div>
       </div>
 

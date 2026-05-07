@@ -21,7 +21,11 @@ export default function AppointmentCalendar({
   onSelectAppointment, 
   onSelectDay,
   selectedDate,
-  selectedAppointmentId 
+  selectedAppointmentId,
+  date,
+  onNavigate,
+  view,
+  onView
 }) {
   const eventStyleGetter = (event) => {
     const status = event.resource.status || APPOINTMENT_STATUSES.PENDING;
@@ -118,6 +122,10 @@ export default function AppointmentCalendar({
         events={events}
         startAccessor="start"
         endAccessor="end"
+        view={view}
+        onView={onView}
+        date={date}
+        onNavigate={onNavigate}
         defaultView={Views.MONTH}
         views={[Views.MONTH, Views.WEEK, Views.AGENDA]}
         onSelectEvent={(event) => onSelectAppointment(event.id)}

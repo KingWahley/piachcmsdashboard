@@ -1,51 +1,62 @@
 import React from 'react';
 import { Icons } from '@/components/shared/Icons';
 import AppointmentStatusBadge from './AppointmentStatusBadge';
-import { APPOINTMENT_STATUSES } from '@/constants/appointmentStatus';
+import { STATUS_COLORS, APPOINTMENT_STATUSES } from '@/constants/appointmentStatus';
 
 export default function AppointmentCard({ appointment, onView, onApprove, onReject }) {
-  const isPending = appointment.status === 'Pending';
+  const isPending = appointment.status === APPOINTMENT_STATUSES.PENDING;
+  const statusColor = STATUS_COLORS[appointment.status] || STATUS_COLORS[APPOINTMENT_STATUSES.PENDING];
 
   return (
-    <div className="bg-white p-4 rounded border border-[rgba(0,0,0,0.05)] shadow-sm hover:shadow-md transition-shadow relative">
-      <div className="flex justify-between items-start mb-2">
-        <div className="text-[11px] font-bold text-[var(--gold)]">{appointment.preferredTime}</div>
+    <div 
+      className="bg-white p-5 rounded-lg border border-[rgba(0,0,0,0.05)] shadow-sm hover:shadow-md transition-all relative"
+      style={{ borderLeft: `4px solid ${statusColor.dot}` }}
+    >
+      <div className="mb-4">
+        <div className="text-[12px] font-bold text-[var(--gold-dark)] mb-1">
+          {appointment.preferredTime}
+        </div>
+        <div className="text-base font-extrabold text-[var(--burgundy)] mb-1">
+          {appointment.clientName}
+        </div>
+        <p className="text-[12px] text-[var(--ink-light)] leading-relaxed">
+          {appointment.notes || 'No notes provided for this consultation request.'}
+        </p>
+      </div>
+      
+      <div className="flex justify-between items-center pt-2">
         <AppointmentStatusBadge status={appointment.status} />
-      </div>
-      
-      <div className="text-sm font-bold text-[var(--burgundy)] mb-1">{appointment.clientName}</div>
-      <div className="text-[11px] text-[var(--ink-light)] mb-3 line-clamp-2">
-        {appointment.notes || 'No notes provided.'}
-      </div>
-      
-      <div className="flex justify-end gap-2 mt-2">
-        <button 
-          onClick={() => onView(appointment)}
-          className="p-1.5 rounded border border-[var(--stone-dark)] text-[var(--ink-light)] hover:bg-[var(--stone)] transition-colors"
-          title="View Details"
-        >
-          <Icons.settings style={{ width: '14px', height: '14px' }} />
-        </button>
         
-        {isPending && (
-          <>
-            <button 
-              onClick={() => onApprove(appointment.id)}
-              className="p-1.5 rounded border border-[var(--green)] text-[var(--green)] hover:bg-[var(--green)]/10 transition-colors"
-              title="Approve"
-            >
-              <Icons.check style={{ width: '14px', height: '14px' }} />
-            </button>
-            <button 
-              onClick={() => onReject(appointment.id)}
-              className="p-1.5 rounded border border-[var(--red)] text-[var(--red)] hover:bg-[var(--red)]/10 transition-colors"
-              title="Reject"
-            >
-              <Icons.close style={{ width: '14px', height: '14px' }} />
-            </button>
-          </>
-        )}
+        <div className="flex gap-2">
+          <button 
+            onClick={() => onView(appointment)}
+            className="p-2 rounded-md border border-[var(--stone-dark)] text-[var(--ink-light)] hover:bg-[var(--stone-light)] transition-colors bg-white shadow-sm"
+            title="View Details"
+          >
+            <Icons.eye className="w-4 h-4" />
+          </button>
+          
+          {isPending && (
+            <>
+              <button 
+                onClick={() => onApprove(appointment.id)}
+                className="p-2 rounded-md border border-[var(--stone-dark)] text-[var(--ink-mid)] hover:bg-[var(--green-light)] transition-colors bg-white shadow-sm"
+                title="Approve"
+              >
+                <Icons.check className="w-4 h-4" />
+              </button>
+              <button 
+                onClick={() => onReject(appointment.id)}
+                className="p-2 rounded-md border border-[var(--stone-dark)] text-[var(--ink-mid)] hover:bg-[var(--red-light)] transition-colors bg-white shadow-sm"
+                title="Reject"
+              >
+                <Icons.close className="w-4 h-4" />
+              </button>
+            </>
+          )}
+        </div>
       </div>
     </div>
   );
 }
+

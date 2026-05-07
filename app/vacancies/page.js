@@ -72,7 +72,7 @@ export default function VacanciesPage() {
 
   // Get applications for the reviewed vacancy
   const vacancyApps = reviewVacancy 
-    ? applications.filter(app => app.role === reviewVacancy.title || app.vacancyId === reviewVacancy.id)
+    ? applications.filter(app => app.jobId === reviewVacancy.id)
     : [];
 
   return (
@@ -134,30 +134,33 @@ export default function VacanciesPage() {
       {/* Grid View */}
       {view === 'grid' && !reviewVacancy && (
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(320px, 1fr))', gap: '20px', marginBottom: '32px' }}>
-          {filteredAndSortedData.map((vacancy) => (
-            <div key={vacancy.id} className="card" style={{ background: 'white', border: '1px solid var(--stone-dark)', borderRadius: '8px', overflow: 'hidden', display: 'flex', flexDirection: 'column' }}>
-              <div style={{ padding: '24px', flex: 1 }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '12px' }}>
-                  <StatusPill status={vacancy.status} />
-                  <span style={{ fontSize: '11px', color: 'var(--ink-light)' }}>{vacancy.datePosted || vacancy.date}</span>
+          {filteredAndSortedData.map((vacancy) => {
+            const count = applications.filter(app => app.jobId === vacancy.id).length;
+            return (
+              <div key={vacancy.id} className="card" style={{ background: 'white', border: '1px solid var(--stone-dark)', borderRadius: '8px', overflow: 'hidden', display: 'flex', flexDirection: 'column' }}>
+                <div style={{ padding: '24px', flex: 1 }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '12px' }}>
+                    <StatusPill status={vacancy.status} />
+                    <span style={{ fontSize: '11px', color: 'var(--ink-light)' }}>{vacancy.datePosted || vacancy.date}</span>
+                  </div>
+                  <h3 style={{ fontSize: '18px', fontWeight: 'bold', color: 'var(--burgundy)', marginBottom: '8px' }}>{vacancy.title}</h3>
+                  <div style={{ fontSize: '12px', color: 'var(--gold-dark)', fontWeight: 'bold', marginBottom: '16px' }}>{vacancy.type} • {vacancy.location}</div>
+                  <p style={{ fontSize: '13px', color: 'var(--ink-mid)', lineHeight: '1.6', marginBottom: '20px' }}>{vacancy.description}</p>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                     <div style={{ padding: '4px 8px', background: 'var(--blue-light)', color: 'var(--blue)', borderRadius: '4px', fontSize: '11px', fontWeight: 'bold' }}>{count} Applicants</div>
+                     <div style={{ padding: '4px 8px', background: 'var(--cream)', color: 'var(--ink-mid)', borderRadius: '4px', fontSize: '11px' }}>{vacancy.department}</div>
+                  </div>
                 </div>
-                <h3 style={{ fontSize: '18px', fontWeight: 'bold', color: 'var(--burgundy)', marginBottom: '8px' }}>{vacancy.title}</h3>
-                <div style={{ fontSize: '12px', color: 'var(--gold-dark)', fontWeight: 'bold', marginBottom: '16px' }}>{vacancy.type} • {vacancy.location}</div>
-                <p style={{ fontSize: '13px', color: 'var(--ink-mid)', lineHeight: '1.6', marginBottom: '20px' }}>{vacancy.description}</p>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                   <div style={{ padding: '4px 8px', background: 'var(--blue-light)', color: 'var(--blue)', borderRadius: '4px', fontSize: '11px', fontWeight: 'bold' }}>{vacancy.applicantsCount || 0} Applicants</div>
-                   <div style={{ padding: '4px 8px', background: 'var(--cream)', color: 'var(--ink-mid)', borderRadius: '4px', fontSize: '11px' }}>{vacancy.department}</div>
+                <div style={{ padding: '16px 24px', borderTop: '1px solid var(--stone)', background: 'var(--cream)', display: 'flex', justifyContent: 'space-between' }}>
+                  <button className="text-btn" style={{ color: 'var(--burgundy)', fontSize: '12px', fontWeight: 'bold' }} onClick={() => handleReview(vacancy)}>View Details</button>
+                  <div style={{ display: 'flex', gap: '12px' }}>
+                    <Icons.pencil style={{ width: '16px', height: '16px', cursor: 'pointer', color: 'var(--ink-mid)' }} onClick={() => handleEdit(vacancy)} />
+                    <Icons.close style={{ width: '16px', height: '16px', cursor: 'pointer', color: 'var(--red)' }} onClick={() => deleteItem(vacancy.id)} />
+                  </div>
                 </div>
               </div>
-              <div style={{ padding: '16px 24px', borderTop: '1px solid var(--stone)', background: 'var(--cream)', display: 'flex', justifyContent: 'space-between' }}>
-                <button className="text-btn" style={{ color: 'var(--burgundy)', fontSize: '12px', fontWeight: 'bold' }} onClick={() => handleReview(vacancy)}>View Details</button>
-                <div style={{ display: 'flex', gap: '12px' }}>
-                  <Icons.pencil style={{ width: '16px', height: '16px', cursor: 'pointer', color: 'var(--ink-mid)' }} onClick={() => handleEdit(vacancy)} />
-                  <Icons.close style={{ width: '16px', height: '16px', cursor: 'pointer', color: 'var(--red)' }} onClick={() => deleteItem(vacancy.id)} />
-                </div>
-              </div>
-            </div>
-          ))}
+            );
+          })}
         </div>
       )}
 
@@ -192,47 +195,50 @@ export default function VacanciesPage() {
                 </tr>
               </thead>
               <tbody>
-                {filteredAndSortedData.map((vacancy) => (
-                  <tr 
-                    key={vacancy.id} 
-                    onClick={() => handleReview(vacancy)}
-                    style={{ borderBottom: '1px solid var(--stone)', cursor: 'pointer', background: reviewVacancy?.id === vacancy.id ? '#FCFAF6' : 'transparent', transition: 'background 0.2s' }}
-                  >
-                    <td style={{ padding: '18px 20px' }}>
-                      <div style={{ fontSize: '14px', fontWeight: 'bold', color: 'var(--burgundy)' }}>{vacancy.title}</div>
-                      <div style={{ fontSize: '11px', color: 'var(--ink-light)', marginTop: '2px', maxWidth: '400px', lineHeight: '1.4', display: '-webkit-box', WebkitLineClamp: '2', WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>
-                        {vacancy.description}
-                      </div>
-                    </td>
-                    <td style={{ padding: '18px 20px' }}>
-                      <span style={{ fontSize: '12px', color: 'var(--ink-mid)' }}>{vacancy.type}</span>
-                    </td>
-                    <td style={{ padding: '18px 20px' }}>
-                      <span style={{ display: 'inline-flex', alignItems: 'center', gap: '5px', fontSize: '11px', color: 'var(--blue)', background: 'var(--blue-light)', padding: '6px 12px', borderRadius: '15px', fontWeight: 'bold' }}>
-                        {vacancy.applicantsCount || 0} Apps
-                      </span>
-                    </td>
-                    <td style={{ padding: '18px 20px' }}>
-                      <StatusPill status={vacancy.status} />
-                    </td>
-                    <td style={{ padding: '18px 20px' }}>
-                      <div style={{ fontSize: '12px', color: 'var(--ink-mid)' }}>{vacancy.datePosted || vacancy.date}</div>
-                    </td>
-                    <td style={{ padding: '18px 20px' }}>
-                      <div style={{ display: 'flex', gap: '8px' }}>
-                        <button className="icon-btn-bordered" title="View Details" onClick={(e) => { e.stopPropagation(); handleReview(vacancy); }}>
-                          <Icons.eye style={{ width: '16px', height: '16px' }} />
-                        </button>
-                        <button className="icon-btn-bordered" title="Edit Vacancy" onClick={(e) => { e.stopPropagation(); handleEdit(vacancy); }}>
-                          <Icons.pencil style={{ width: '16px', height: '16px' }} />
-                        </button>
-                        <button className="icon-btn-bordered" style={{ color: 'var(--red)' }} title="Delete" onClick={(e) => { e.stopPropagation(); deleteItem(vacancy.id); }}>
-                          <Icons.close style={{ width: '16px', height: '16px' }} />
-                        </button>
-                      </div>
-                    </td>
-                  </tr>
-                ))}
+                {filteredAndSortedData.map((vacancy) => {
+                  const count = applications.filter(app => app.jobId === vacancy.id).length;
+                  return (
+                    <tr 
+                      key={vacancy.id} 
+                      onClick={() => handleReview(vacancy)}
+                      style={{ borderBottom: '1px solid var(--stone)', cursor: 'pointer', background: reviewVacancy?.id === vacancy.id ? '#FCFAF6' : 'transparent', transition: 'background 0.2s' }}
+                    >
+                      <td style={{ padding: '18px 20px' }}>
+                        <div style={{ fontSize: '14px', fontWeight: 'bold', color: 'var(--burgundy)' }}>{vacancy.title}</div>
+                        <div style={{ fontSize: '11px', color: 'var(--ink-light)', marginTop: '2px', maxWidth: '400px', lineHeight: '1.4', display: '-webkit-box', WebkitLineClamp: '2', WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>
+                          {vacancy.description}
+                        </div>
+                      </td>
+                      <td style={{ padding: '18px 20px' }}>
+                        <span style={{ fontSize: '12px', color: 'var(--ink-mid)' }}>{vacancy.type}</span>
+                      </td>
+                      <td style={{ padding: '18px 20px' }}>
+                        <span style={{ display: 'inline-flex', alignItems: 'center', gap: '5px', fontSize: '11px', color: 'var(--blue)', background: 'var(--blue-light)', padding: '6px 12px', borderRadius: '15px', fontWeight: 'bold' }}>
+                          {count} Apps
+                        </span>
+                      </td>
+                      <td style={{ padding: '18px 20px' }}>
+                        <StatusPill status={vacancy.status} />
+                      </td>
+                      <td style={{ padding: '18px 20px' }}>
+                        <div style={{ fontSize: '12px', color: 'var(--ink-mid)' }}>{vacancy.datePosted || vacancy.date}</div>
+                      </td>
+                      <td style={{ padding: '18px 20px' }}>
+                        <div style={{ display: 'flex', gap: '8px' }}>
+                          <button className="icon-btn-bordered" title="View Details" onClick={(e) => { e.stopPropagation(); handleReview(vacancy); }}>
+                            <Icons.eye style={{ width: '16px', height: '16px' }} />
+                          </button>
+                          <button className="icon-btn-bordered" title="Edit Vacancy" onClick={(e) => { e.stopPropagation(); handleEdit(vacancy); }}>
+                            <Icons.pencil style={{ width: '16px', height: '16px' }} />
+                          </button>
+                          <button className="icon-btn-bordered" style={{ color: 'var(--red)' }} title="Delete" onClick={(e) => { e.stopPropagation(); deleteItem(vacancy.id); }}>
+                            <Icons.close style={{ width: '16px', height: '16px' }} />
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  );
+                })}
               </tbody>
             </table>
           </div>

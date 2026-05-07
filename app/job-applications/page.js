@@ -8,19 +8,27 @@ import EmptyState from '@/components/shared/EmptyState';
 import { useStore } from '@/hooks/useStore';
 import { jobApplicationsStore, vacanciesStore } from '@/lib/store';
 import { useFilterSort } from '@/hooks/useFilterSort';
-import Link from 'next/link';
+import { useSearchParams } from 'next/navigation';
 
 export default function JobApplicationsPage() {
   const { data: applications, updateItem, deleteItem } = useStore(jobApplicationsStore);
   const { data: vacancies } = useStore(vacanciesStore);
+  const searchParams = useSearchParams();
+  const vacancyIdParam = searchParams.get('vacancy');
   
   const [reviewApp, setReviewApp] = useState(null);
 
   const { filteredAndSortedData, searchQuery, setSearchQuery, filters, updateFilter } = useFilterSort(
     applications, 
-    { status: 'all', vacancyId: 'all' }, 
+    { status: 'all', jobId: vacancyIdParam || 'all' }, 
     { key: 'date', order: 'desc' }
   );
+
+  useEffect(() => {
+    if (vacancyIdParam) {
+      updateFilter('jobId', vacancyIdParam);
+    }
+  }, [vacancyIdParam]);
 
   const handleReview = (app) => {
     if (reviewApp?.id === app.id) {
@@ -85,8 +93,8 @@ export default function JobApplicationsPage() {
         <div style={{ position: 'relative', minWidth: '200px' }}>
           <select 
             className="filter-select" 
-            value={filters.vacancyId} 
-            onChange={(e) => updateFilter('vacancyId', e.target.value)}
+            value={filters.jobId} 
+            onChange={(e) => updateFilter('jobId', e.target.value)}
             style={{ width: '100%', padding: '12px 35px 12px 15px', border: '1px solid var(--stone-dark)', borderRadius: '6px', appearance: 'none', fontSize: '13px', background: 'var(--cream)' }}
           >
             <option value="all">All Vacancies</option>
@@ -246,6 +254,21 @@ export default function JobApplicationsPage() {
                 <div style={{ border: '1px solid var(--stone-dark)', borderRadius: '6px', background: 'var(--cream)', padding: '12px' }}>
                   <div style={{ fontSize: '9px', color: 'var(--ink-light)', textTransform: 'uppercase', letterSpacing: '0.08em', fontWeight: 'bold', marginBottom: '5px' }}>Phone Number</div>
                   <div style={{ fontSize: '12px', color: 'var(--ink)', fontWeight: 'bold' }}>{reviewApp.phone}</div>
+                </div>
+              </div>
+
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px', marginBottom: '20px' }}>
+                <div style={{ border: '1px solid var(--stone-dark)', borderRadius: '6px', background: 'var(--cream)', padding: '12px' }}>
+                  <div style={{ fontSize: '9px', color: 'var(--ink-light)', textTransform: 'uppercase', letterSpacing: '0.08em', fontWeight: 'bold', marginBottom: '5px' }}>Experience</div>
+                  <div style={{ fontSize: '12px', color: 'var(--ink)', fontWeight: 'bold' }}>{reviewApp.experience || 'Not specified'}</div>
+                </div>
+                <div style={{ border: '1px solid var(--stone-dark)', borderRadius: '6px', background: 'var(--cream)', padding: '12px' }}>
+                  <div style={{ fontSize: '9px', color: 'var(--ink-light)', textTransform: 'uppercase', letterSpacing: '0.08em', fontWeight: 'bold', marginBottom: '5px' }}>Portfolio</div>
+                  {reviewApp.portfolioUrl ? (
+                    <a href={reviewApp.portfolioUrl} target="_blank" rel="noopener noreferrer" style={{ fontSize: '12px', color: 'var(--gold-dark)', fontWeight: 'bold', textDecoration: 'underline' }}>View Portfolio</a>
+                  ) : (
+                    <div style={{ fontSize: '12px', color: 'var(--ink)', fontWeight: 'bold' }}>No link provided</div>
+                  )}
                 </div>
               </div>
 

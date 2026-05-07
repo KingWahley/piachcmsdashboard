@@ -202,22 +202,25 @@ export default function AppointmentReviewPanel({
 
         {/* Footer Actions */}
         <div className="p-4 border-t border-[rgba(0,0,0,0.05)] bg-white flex flex-col gap-2">
-          {appointment.status === APPOINTMENT_STATUSES.PENDING && (
-            <div className="flex gap-2">
+          <div className="flex gap-2">
+            {appointment.status !== APPOINTMENT_STATUSES.APPROVED && (
               <button 
                 onClick={handleApprove}
                 className="flex-1 bg-[var(--green)] text-white py-2.5 rounded text-xs font-bold hover:bg-[var(--green)]/90 transition-colors"
               >
                 Approve Request
               </button>
+            )}
+            {appointment.status !== APPOINTMENT_STATUSES.REJECTED && (
               <button 
                 onClick={handleReject}
                 className={`flex-1 ${showRejectInput ? 'bg-[var(--red)] text-white' : 'bg-white text-[var(--red)] border border-[var(--red)]'} py-2.5 rounded text-xs font-bold hover:bg-[var(--red-light)] transition-colors`}
               >
                 {showRejectInput ? 'Confirm Reject' : 'Reject'}
               </button>
-            </div>
-          )}
+            )}
+          </div>
+
           <div className="flex gap-2">
             <button 
               onClick={handleReschedule}
@@ -225,12 +228,14 @@ export default function AppointmentReviewPanel({
             >
               Reschedule
             </button>
-            <button 
-              onClick={() => onStatusChange(appointment.id, APPOINTMENT_STATUSES.COMPLETED, { internalNotes })}
-              className="flex-1 bg-[var(--stone)] text-[var(--ink-mid)] py-2 rounded text-xs font-bold hover:bg-[var(--stone-dark)] transition-colors"
-            >
-              Mark Completed
-            </button>
+            {appointment.status !== APPOINTMENT_STATUSES.COMPLETED && (
+              <button 
+                onClick={() => onStatusChange(appointment.id, APPOINTMENT_STATUSES.COMPLETED, { internalNotes })}
+                className="flex-1 bg-[var(--stone)] text-[var(--ink-mid)] py-2 rounded text-xs font-bold hover:bg-[var(--stone-dark)] transition-colors"
+              >
+                Mark Completed
+              </button>
+            )}
           </div>
         </div>
       </div>
