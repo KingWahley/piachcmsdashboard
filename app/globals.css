@@ -55,6 +55,10 @@
     --hover-border: var(--gold);
     --sb-track: var(--cream);
     --sb-thumb: var(--stone-dark);
+    --submenu-bg: var(--cream-light);
+    --submenu-hover-bg: var(--gold-light);
+    --submenu-text: var(--ink);
+    --submenu-hover-text: var(--burgundy);
   }
 
   [data-theme='light'] {
@@ -112,6 +116,10 @@
     --hover-border: #475569;
     --sb-track: #0F172A;
     --sb-thumb: #334155;
+    --submenu-bg: #F59E0B;
+    --submenu-hover-bg: #32171B;
+    --submenu-text: #0F172A;
+    --submenu-hover-text: #FFFFFF;
   }
 
   body {
@@ -160,11 +168,18 @@
 .sidebar {
   width: var(--sidebar-w);
   background: var(--sidebar-bg);
-  display: flex; flex-direction: column;
   flex-shrink: 0;
   position: sticky; top: 0; height: 100vh; overflow-y: auto;
   overscroll-behavior: contain;
   border-right: 1px solid var(--border-color);
+  scrollbar-gutter: stable;
+}
+
+.sidebar-inner {
+  display: flex;
+  flex-direction: column;
+  min-height: 100%;
+  width: 100%;
 }
 
 .sidebar::-webkit-scrollbar-track {
@@ -232,12 +247,16 @@
 .submenu { display: none; flex-direction: column; gap: 8px; margin: 0; }
 .nav-group.open .submenu { display: flex; }
 .submenu-item {
-  display: block; width: 100%; text-align: left; border: 1px solid rgba(213,167,63,0.45);
-  background: rgba(250,247,242,0.94); color: var(--burgundy);
+  display: block; width: 100%; text-align: left; border: 1px solid var(--border-color);
+  background: var(--submenu-bg); color: var(--submenu-text);
   font-family: Verdana, sans-serif; font-size: 11px; padding: 10px 12px;
-  border-radius: 5px; cursor: pointer; transition: all 0.15s;
+  border-radius: 5px; cursor: pointer; transition: all 0.2s;
 }
-.submenu-item:hover { background: var(--gold-light); border-color: var(--gold); color: var(--burgundy); }
+.submenu-item:hover { 
+  background: var(--submenu-hover-bg); 
+  border-color: var(--gold); 
+  color: var(--submenu-hover-text); 
+}
 .submenu-item.active-sub { background: var(--burgundy); border-color: var(--burgundy); color: var(--white); font-weight: bold; }
 .nav-group.open .nav-badge { background: rgba(213,167,63,0.22); color: var(--gold); }
 

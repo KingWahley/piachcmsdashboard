@@ -26,7 +26,7 @@ export default function Sidebar() {
 
     const lenis = new Lenis({
       wrapper: sidebarRef.current,
-      content: sidebarRef.current,
+      content: sidebarRef.current.querySelector('.sidebar-inner'),
       duration: 1.2,
       easing: (t) => Math.min(1, 1.001 - Math.pow(2, -10 * t)),
       smoothWheel: true,
@@ -134,31 +134,33 @@ export default function Sidebar() {
 
   return (
     <aside className="sidebar" data-lenis-prevent ref={sidebarRef}>
-      <Link href="/dashboard" className="sidebar-logo" style={{ textDecoration: 'none' }}>
-        <div className="logo-mark" style={{ background: 'transparent' }}>
-          <img 
-            src="/images/logo.png" 
-            alt="Pieach Logo" 
-            style={{ width: '100%', height: '100%', objectFit: 'cover', borderRadius: '4px' }} 
-          />
-        </div>
-        <div>
-          <div className="logo-name">Pieach</div>
-          <div className="logo-sub">Admin CMS</div>
-        </div>
-      </Link>
+      <div className="sidebar-inner">
+        <Link href="/dashboard" className="sidebar-logo" style={{ textDecoration: 'none' }}>
+          <div className="logo-mark" style={{ background: 'transparent' }}>
+            <img 
+              src="/images/logo.png" 
+              alt="Pieach Logo" 
+              style={{ width: '100%', height: '100%', objectFit: 'cover', borderRadius: '4px' }} 
+            />
+          </div>
+          <div>
+            <div className="logo-name">Pieach</div>
+            <div className="logo-sub">Admin CMS</div>
+          </div>
+        </Link>
 
-      {renderNavGroup(MAIN_NAV, 'Main')}
-      {renderNavGroup(CAREERS_NAV, 'Careers')}
-      {renderNavGroup(SYSTEM_NAV, 'System')}
+        {renderNavGroup(MAIN_NAV, 'Main')}
+        {renderNavGroup(CAREERS_NAV, 'Careers')}
+        {renderNavGroup(SYSTEM_NAV, 'System')}
 
-      <div className="sidebar-spacer"></div>
+        <div className="sidebar-spacer"></div>
 
-      <div className="sidebar-footer">
-        <div className="avatar-circle">AD</div>
-        <div>
-          <div className="avatar-name">Admin</div>
-          <div className="avatar-role">Super Admin</div>
+        <div className="sidebar-footer">
+          <div className="avatar-circle">AD</div>
+          <div>
+            <div className="avatar-name">Admin</div>
+            <div className="avatar-role">Super Admin</div>
+          </div>
         </div>
       </div>
     </aside>
