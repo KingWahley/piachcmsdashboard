@@ -9,6 +9,14 @@ import Link from 'next/link';
 export default function BlogPreview({ isOpen, onClose, post }) {
   if (!post) return null;
 
+  const renderContent = () => {
+    if (!post.content) return <p>Full content of the blog post goes here...</p>;
+    return post.content.split('\n').map((para, i) => (
+      para.trim() && <p key={i}>{para.trim()}</p>
+    ));
+  };
+
+  const content = renderContent();
   const readingTime = Math.ceil((post.content?.split(' ').length || 0) / 200);
 
   return (
@@ -185,7 +193,7 @@ export default function BlogPreview({ isOpen, onClose, post }) {
         </div>
 
         <div className="blog-content">
-          {post.content}
+          {content}
         </div>
 
         {post.tags && post.tags.length > 0 && (

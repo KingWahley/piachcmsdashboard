@@ -152,9 +152,9 @@ export default function TeamMemberForm({ mode = 'create', initialData = null }) 
           handleQualChange={handleQualChange}
           addQualification={addQualification}
           removeQualification={removeQualification}
+          handleImageChange={handleImageChange}
           errors={errors} 
         />
-        <TeamPhotoUpload image={formData.image} onChange={handleImageChange} />
         <TeamBioField formData={formData} handleChange={handleChange} errors={errors} />
         <TeamSettingsFields formData={formData} handleChange={handleChange} />
       </div>
