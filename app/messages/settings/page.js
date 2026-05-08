@@ -13,18 +13,11 @@ export default function EditContactDetailsPage() {
     primaryEmail: 'hello@pieach.com',
     supportEmail: 'enquiries@pieach.com',
     googleMapLink: '',
-    socialLinks: {
-      facebook: 'https://facebook.com/...',
-      instagram: 'https://instagram.com/...',
-      x: 'https://x.com/...',
-      linkedin: 'https://linkedin.com/company/...',
-      youtube: 'https://youtube.com/...',
-      tiktok: 'https://tiktok.com/@...',
-      whatsapp: 'https://wa.me/...',
-      pinterest: 'https://pinterest.com/...',
-      behance: 'https://behance.net/...',
-      dribbble: 'https://dribbble.com/...'
-    }
+    socialLinks: [
+      { platform: 'instagram', url: 'https://instagram.com/...' },
+      { platform: 'facebook', url: 'https://facebook.com/...' },
+      { platform: 'x', url: 'https://x.com/...' }
+    ]
   });
 
   const [showPreviewPanel, setShowPreviewPanel] = useState(false);
@@ -51,13 +44,29 @@ export default function EditContactDetailsPage() {
     }));
   };
 
-  const handleSocialChange = (platform, value) => {
+  const handleSocialChange = (index, value) => {
+    const newLinks = [...formData.socialLinks];
+    newLinks[index].url = value;
+    setFormData(prev => ({ ...prev, socialLinks: newLinks }));
+  };
+
+  const handlePlatformChange = (index, platform) => {
+    const newLinks = [...formData.socialLinks];
+    newLinks[index].platform = platform;
+    setFormData(prev => ({ ...prev, socialLinks: newLinks }));
+  };
+
+  const addSocialLink = () => {
     setFormData(prev => ({
       ...prev,
-      socialLinks: {
-        ...prev.socialLinks,
-        [platform]: value
-      }
+      socialLinks: [...prev.socialLinks, { platform: 'new', url: '' }]
+    }));
+  };
+
+  const removeSocialLink = (index) => {
+    setFormData(prev => ({
+      ...prev,
+      socialLinks: prev.socialLinks.filter((_, i) => i !== index)
     }));
   };
 
@@ -170,27 +179,59 @@ export default function EditContactDetailsPage() {
               <h2 className="text-[11px] font-bold text-[#32171B] tracking-widest uppercase">Social Media Links</h2>
               <button className="text-[10px] text-[#A87E28] hover:underline font-bold">Clear inactive links →</button>
             </div>
-            <div className="p-6 grid grid-cols-2 gap-x-6 gap-y-4">
-              {Object.entries(formData.socialLinks).map(([platform, value]) => {
-                const initials = platform === 'x' ? 'X' : platform.substring(0, 2).toUpperCase();
-                return (
-                  <div key={platform} className="flex flex-col gap-1.5">
-                    <label className="text-[9px] font-bold text-[#32171B] uppercase tracking-wider">{platform.replace(/([A-Z])/g, ' $1')}</label>
-                    <div className="flex items-stretch">
-                      <div className="w-10 bg-[#32171B] flex items-center justify-center text-[#D5A73F] font-bold text-[11px] rounded-l-md border border-[#32171B]">
-                        {initials}
+            <div className="p-6 flex flex-col gap-5">
+              <div className="grid grid-cols-2 gap-x-6 gap-y-5">
+                {formData.socialLinks.map((link, index) => {
+                  const initials = link.platform === 'x' ? 'X' : link.platform.substring(0, 2).toUpperCase();
+                  const isDefault = ['instagram', 'facebook', 'x'].includes(link.platform) && index < 3;
+                  
+                  return (
+                    <div key={index} className="flex flex-col gap-1.5 relative group">
+                      <div className="flex justify-between items-center">
+                        {isDefault ? (
+                          <label className="text-[9px] font-bold text-[#32171B] uppercase tracking-wider">{link.platform === 'x' ? 'X (Twitter)' : link.platform}</label>
+                        ) : (
+                          <input 
+                            type="text"
+                            value={link.platform}
+                            onChange={(e) => handlePlatformChange(index, e.target.value)}
+                            placeholder="Platform Name"
+                            className="text-[9px] font-bold text-[#A87E28] uppercase tracking-wider bg-transparent border-none outline-none w-24"
+                          />
+                        )}
+                        {!isDefault && (
+                          <button 
+                            onClick={() => removeSocialLink(index)}
+                            className="text-[9px] text-red-400 opacity-0 group-hover:opacity-100 hover:text-red-600 transition-all font-bold uppercase"
+                          >
+                            Remove
+                          </button>
+                        )}
                       </div>
-                      <input 
-                        type="text" 
-                        value={value}
-                        onChange={(e) => handleSocialChange(platform, e.target.value)}
-                        placeholder={`https://${platform}.com/...`}
-                        className="flex-1 px-3 py-2 bg-[#FAF7F2] border border-[#DDD5C8] border-l-0 rounded-r-md text-xs text-[#1A1410] outline-none focus:border-[#D5A73F]"
-                      />
+                      <div className="flex items-stretch">
+                        <div className="w-10 bg-[#32171B] flex items-center justify-center text-[#D5A73F] font-bold text-[11px] rounded-l-md border border-[#32171B]">
+                          {initials || '?'}
+                        </div>
+                        <input 
+                          type="text" 
+                          value={link.url}
+                          onChange={(e) => handleSocialChange(index, e.target.value)}
+                          placeholder={`https://...`}
+                          className="flex-1 px-3 py-2 bg-[#FAF7F2] border border-[#DDD5C8] border-l-0 rounded-r-md text-xs text-[#1A1410] outline-none focus:border-[#D5A73F]"
+                        />
+                      </div>
                     </div>
-                  </div>
-                );
-              })}
+                  );
+                })}
+              </div>
+
+              <button 
+                onClick={addSocialLink}
+                className="mt-2 flex items-center gap-2 text-[10px] font-bold text-[#A87E28] hover:text-[#32171B] transition-colors uppercase tracking-widest border border-dashed border-[#DDD5C8] p-3 rounded-md justify-center"
+              >
+                <Icons.plus className="w-3 h-3" />
+                Add Social Platform
+              </button>
             </div>
             <div className="p-6 bg-[#FAF7F2] border-t border-[#DDD5C8] flex justify-end gap-3">
               <button className="px-6 py-2 bg-white border border-[#DDD5C8] rounded-md text-xs font-bold text-[#32171B] hover:bg-gray-50">Cancel</button>
@@ -285,14 +326,14 @@ export default function EditContactDetailsPage() {
                   <h3 className="text-[10px] font-bold text-[#32171B] uppercase tracking-[0.2em]">Social Presence</h3>
                 </div>
                 <div className="pl-3.5 border-l border-[#F0EBE3] flex flex-wrap gap-2">
-                  {Object.entries(formData.socialLinks)
-                    .filter(([_, value]) => value && value !== 'https://' && !value.endsWith('...'))
-                    .map(([platform]) => (
-                      <div key={platform} className="bg-[#FAF7F2] border border-[#DDD5C8] px-3 py-1 rounded-md text-[10px] font-bold text-[#32171B]">
-                        {platform.toUpperCase()}
+                  {formData.socialLinks
+                    .filter(link => link.url && link.url !== 'https://' && !link.url.endsWith('...'))
+                    .map((link, i) => (
+                      <div key={i} className="bg-[#FAF7F2] border border-[#DDD5C8] px-3 py-1 rounded-md text-[10px] font-bold text-[#32171B]">
+                        {link.platform.toUpperCase()}
                       </div>
                     ))}
-                  {Object.values(formData.socialLinks).every(v => !v || v.endsWith('...')) && (
+                  {formData.socialLinks.every(link => !link.url || link.url.endsWith('...')) && (
                     <span className="text-[11px] text-[#9A8C82] italic">No active social links</span>
                   )}
                 </div>

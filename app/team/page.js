@@ -12,37 +12,79 @@ import { teamStore } from '@/lib/store';
 import { useFilterSort } from '@/hooks/useFilterSort';
 import { useViewMode } from '@/hooks/useViewMode';
 import Pagination from '@/components/shared/Pagination';
+import TeamMemberPreview from '@/components/team/TeamMemberPreview';
+import ConfirmationModal from '@/components/modals/ConfirmationModal';
 
 export default function TeamPage() {
   const router = useRouter();
   const { data, deleteItem } = useStore(teamStore);
   
-  const [designationFilter, setDesignationFilter] = useState('all');
-  const [statusFilter, setStatusFilter] = useState('all');
-  const [currentPage, setCurrentPage] = useState(1);
-  const pageSize = 7;
-
-  const { filteredAndSortedData, searchQuery, setSearchQuery } = useFilterSort(
+  const { 
+    filteredAndSortedData, 
+    searchQuery, 
+    setSearchQuery, 
+    filters, 
+    updateFilter 
+  } = useFilterSort(
     data, 
-    {
-      role: designationFilter === 'all' ? null : designationFilter,
-      status: statusFilter === 'all' ? null : statusFilter
-    }, 
+    { role: 'all', status: 'all' }, 
     { key: 'name', order: 'asc' }
   );
+
+  const [currentPage, setCurrentPage] = useState(1);
+  const pageSize = 7;
+  
+  const [selectedMember, setSelectedMember] = useState(null);
+  const [isPreviewOpen, setIsPreviewOpen] = useState(false);
+  
+  // Confirmation Modal State
+  const [confirmModal, setConfirmModal] = useState({
+    isOpen: false,
+    id: null,
+    name: ''
+  });
+
+  const handlePreview = (member) => {
+    setSelectedMember(member);
+    setIsPreviewOpen(true);
+  };
+
+  const handleDeleteClick = (id, name) => {
+    setConfirmModal({
+      isOpen: true,
+      id,
+      name
+    });
+  };
+
+  const handleConfirmDelete = () => {
+    deleteItem(confirmModal.id);
+    setConfirmModal({ isOpen: false, id: null, name: '' });
+  };
 
   // Reset page when filters change
   useEffect(() => {
     setCurrentPage(1);
-  }, [searchQuery, designationFilter, statusFilter]);
+  }, [searchQuery, filters]);
   
   const [view, setView] = useViewMode();
 
   const stats = [
-    { label: 'TEAM MEMBERS', value: data.length },
-    { label: 'ARCHITECTS', value: data.filter(m => m.role?.toLowerCase().includes('architect')).length },
-    { label: 'DESIGN LEADS', value: data.filter(m => m.role?.toLowerCase().includes('designer') || m.role?.toLowerCase().includes('director')).length },
-    { label: 'INACTIVE PROFILES', value: data.filter(m => m.status === 'inactive').length },
+    { 
+      label: 'Total team members', 
+      value: data.length, 
+      subtext: 'Profiles currently available in the CMS' 
+    },
+    { 
+      label: 'Search results', 
+      value: filteredAndSortedData.length, 
+      subtext: filteredAndSortedData.length === data.length ? 'All members visible' : 'Filtered members visible' 
+    },
+    { 
+      label: 'Last update', 
+      value: 'Apr 29, 2026', 
+      subtext: 'Most recently edited profile' 
+    },
   ];
 
   const designations = ['all', ...new Set(data.map(m => m.role))];
@@ -77,22 +119,24 @@ export default function TeamPage() {
         </button>
       </div>
 
-      {/* KPI Stats Row - Standardized style */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '12px', marginBottom: '32px' }}>
+      {/* KPI Stats Row - Updated to 3 cards */}
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '16px', marginBottom: '32px' }}>
         {stats.map((stat, idx) => (
           <div key={idx} style={{ 
             background: 'var(--white)', 
             border: '1px solid var(--stone-dark)', 
             borderTop: '3px solid var(--gold)', 
             borderRadius: '6px', 
-            padding: '14px',
+            padding: '20px',
             display: 'flex',
             flexDirection: 'column',
             justifyContent: 'center',
-            minHeight: '80px'
+            minHeight: '100px',
+            boxShadow: '0 2px 4px rgba(0,0,0,0.02)'
           }}>
-            <div style={{ fontSize: '24px', fontWeight: 'bold', color: 'var(--burgundy)', lineHeight: 1 }}>{stat.value}</div>
-            <div style={{ fontSize: '10px', color: 'var(--ink-light)', marginTop: '6px', textTransform: 'uppercase', letterSpacing: '0.06em' }}>{stat.label}</div>
+            <div style={{ fontSize: '11px', color: 'var(--ink-light)', marginBottom: '8px', textTransform: 'uppercase', letterSpacing: '0.06em', fontWeight: '700' }}>{stat.label}</div>
+            <div style={{ fontSize: '28px', fontWeight: 'bold', color: 'var(--burgundy)', lineHeight: 1 }}>{stat.value}</div>
+            <div style={{ fontSize: '11px', color: 'var(--gold-dark)', marginTop: '8px', fontWeight: '500' }}>{stat.subtext}</div>
           </div>
         ))}
       </div>
@@ -121,8 +165,8 @@ export default function TeamPage() {
           
           <div style={{ display: 'flex', gap: '12px' }}>
             <select 
-              value={designationFilter}
-              onChange={(e) => setDesignationFilter(e.target.value)}
+              value={filters.role}
+              onChange={(e) => updateFilter('role', e.target.value)}
               style={{ padding: '10px 14px', borderRadius: '6px', border: '1px solid var(--stone)', background: 'var(--white)', fontSize: '13px', color: 'var(--ink)', cursor: 'pointer', outline: 'none', minWidth: '150px' }}
             >
               <option value="all">All Designations</option>
@@ -132,8 +176,8 @@ export default function TeamPage() {
             </select>
 
             <select 
-              value={statusFilter}
-              onChange={(e) => setStatusFilter(e.target.value)}
+              value={filters.status}
+              onChange={(e) => updateFilter('status', e.target.value)}
               style={{ padding: '10px 14px', borderRadius: '6px', border: '1px solid var(--stone)', background: 'var(--white)', fontSize: '13px', color: 'var(--ink)', cursor: 'pointer', outline: 'none', minWidth: '130px' }}
             >
               <option value="all">All Statuses</option>
@@ -205,7 +249,9 @@ export default function TeamPage() {
                   <td style={{ padding: '16px 20px', fontSize: '12.5px', color: 'var(--ink-mid)', fontWeight: '500' }}>{member.role}</td>
                   <td style={{ padding: '16px 20px' }}>
                     <span style={{ padding: '4px 10px', borderRadius: '4px', background: 'var(--cream)', color: 'var(--burgundy)', fontSize: '10px', fontWeight: '800', border: '1px solid var(--stone)' }}>
-                      {member.qualifications || 'B.Arch'}
+                      {Array.isArray(member.qualifications) 
+                        ? member.qualifications.filter(q => q.trim()).join(', ') 
+                        : (member.qualifications || 'B.Arch')}
                     </span>
                   </td>
                   <td style={{ padding: '16px 20px', fontSize: '12.5px', color: 'var(--ink-mid)', maxWidth: '300px', lineHeight: '1.45' }}>
@@ -218,9 +264,15 @@ export default function TeamPage() {
                   </td>
                   <td style={{ padding: '16px 20px', textAlign: 'right' }}>
                     <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '6px' }}>
-                      <button className="action-btn" title="View"><Icons.eye style={{ width: '14px', height: '14px' }} /></button>
+                      <button 
+                        className="action-btn" 
+                        title="View"
+                        onClick={() => handlePreview(member)}
+                      >
+                        <Icons.eye style={{ width: '14px', height: '14px' }} />
+                      </button>
                       <button className="action-btn" onClick={() => router.push(`/team/${member.id}/edit`)} title="Edit"><Icons.pencil style={{ width: '14px', height: '14px' }} /></button>
-                      <button className="action-btn" onClick={() => deleteItem(member.id)} title="Delete"><Icons.close style={{ width: '14px', height: '14px' }} /></button>
+                      <button className="action-btn" onClick={() => handleDeleteClick(member.id, member.name)} title="Delete"><Icons.close style={{ width: '14px', height: '14px' }} /></button>
                     </div>
                   </td>
                 </tr>
@@ -239,7 +291,7 @@ export default function TeamPage() {
         <>
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: '24px', marginBottom: '24px' }}>
             {paginatedData.map((member) => (
-              <div key={member.id} className="team-card-p" style={{ background: 'var(--white)', border: '1.5px solid var(--stone)', borderRadius: '10px', overflow: 'hidden', cursor: 'pointer' }} onClick={() => router.push(`/team/${member.id}/edit`)}>
+              <div key={member.id} className="team-card-p" style={{ background: 'var(--white)', border: '1.5px solid var(--stone)', borderRadius: '10px', overflow: 'hidden', cursor: 'pointer' }} onClick={() => handlePreview(member)}>
                 <div style={{ height: '100px', background: 'var(--burgundy)', position: 'relative' }}>
                   <div style={{ position: 'absolute', bottom: '-28px', left: '16px', width: '70px', height: '70px', borderRadius: '50%', background: 'var(--gold)', border: '3px solid var(--white)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '20px', fontWeight: '800', color: 'var(--burgundy)', overflow: 'hidden' }}>
                     {member.image ? (
@@ -258,7 +310,9 @@ export default function TeamPage() {
                   <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', paddingTop: '14px', borderTop: '1px solid var(--stone)' }}>
                     <StatusPill status={member.status} />
                     <span style={{ fontSize: '10px', fontWeight: '800', color: 'var(--burgundy)', background: 'var(--cream)', padding: '3px 8px', borderRadius: '4px', border: '1px solid var(--stone)' }}>
-                      {member.qualifications || 'B.Arch'}
+                      {Array.isArray(member.qualifications)
+                        ? member.qualifications.filter(q => q.trim())[0] || 'B.Arch'
+                        : (member.qualifications?.split(',')[0] || 'B.Arch')}
                     </span>
                   </div>
                 </div>
@@ -274,6 +328,22 @@ export default function TeamPage() {
           />
         </>
       )}
+
+      <TeamMemberPreview 
+        isOpen={isPreviewOpen}
+        onClose={() => setIsPreviewOpen(false)}
+        member={selectedMember}
+      />
+
+      <ConfirmationModal 
+        isOpen={confirmModal.isOpen}
+        onClose={() => setConfirmModal({ ...confirmModal, isOpen: false })}
+        onConfirm={handleConfirmDelete}
+        title="Delete Team Member"
+        message={`Are you sure you want to delete ${confirmModal.name}? This profile will be permanently removed from the CMS.`}
+        confirmText="Delete Profile"
+        type="danger"
+      />
 
       <style jsx>{`
         .team-row:hover {

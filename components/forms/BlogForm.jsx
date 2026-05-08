@@ -2,8 +2,13 @@
 
 import React, { useState, useEffect } from 'react';
 import { Icons } from '@/components/shared/Icons';
+import ConfirmationModal from '@/components/modals/ConfirmationModal';
+import MediaPickerModal from '@/components/modals/MediaPickerModal';
+import { generateBlogContent } from '@/lib/blogUtils';
 
 export default function BlogForm({ initialData, onSave, onCancel, isNew = false }) {
+  const [isPublishModalOpen, setIsPublishModalOpen] = useState(false);
+  const [isMediaPickerOpen, setIsMediaPickerOpen] = useState(false);
   const [formData, setFormData] = useState({
     title: '',
     category: 'Architecture',
@@ -50,6 +55,22 @@ export default function BlogForm({ initialData, onSave, onCancel, isNew = false 
     }
   };
 
+  const handleMagicGenerate = () => {
+    const generated = generateBlogContent(formData.title, formData.category);
+    handleChange('content', generated);
+    
+    // Also auto-generate SEO if empty
+    if (!formData.seoTitle && formData.title) {
+      handleChange('seoTitle', `${formData.title} | Pieach CMS`);
+    }
+    if (!formData.metaDescription && formData.excerpt) {
+      handleChange('metaDescription', formData.excerpt);
+    }
+    if (!formData.slug && formData.title) {
+      handleChange('slug', formData.title.toLowerCase().replace(/ /g, '-').replace(/[^\w-]+/g, ''));
+    }
+  };
+
   const removeTag = (index) => {
     setFormData(prev => ({
       ...prev,
@@ -57,10 +78,14 @@ export default function BlogForm({ initialData, onSave, onCancel, isNew = false 
     }));
   };
 
-  const handleSubmit = (e) => {
-    e.preventDefault();
-    const { tagInput, ...finalData } = formData;
+  const executeSave = (statusOverride) => {
+    const { tagInput, ...formDataWithoutTag } = formData;
+    const finalData = {
+      ...formDataWithoutTag,
+      status: statusOverride || formData.status
+    };
     onSave(finalData);
+    setIsPublishModalOpen(false);
   };
 
   return (
@@ -139,7 +164,17 @@ export default function BlogForm({ initialData, onSave, onCancel, isNew = false 
 
           {/* Featured Image URL */}
           <div className="flex flex-col gap-2">
-            <label className="text-[10px] font-bold text-[#32171B] uppercase tracking-wider">FEATURED IMAGE URL</label>
+            <div className="flex justify-between items-center">
+              <label className="text-[10px] font-bold text-[#32171B] uppercase tracking-wider">FEATURED IMAGE URL</label>
+              <button 
+                type="button"
+                onClick={() => setIsMediaPickerOpen(true)}
+                className="text-[9px] font-black text-[#D5A73F] uppercase tracking-wider flex items-center gap-1 hover:text-[#32171B] transition-colors"
+              >
+                <Icons.media className="w-2.5 h-2.5" />
+                Choose from Library
+              </button>
+            </div>
             <input 
               type="text" 
               placeholder="https://images.unsplash.com/..."
@@ -162,7 +197,17 @@ export default function BlogForm({ initialData, onSave, onCancel, isNew = false 
 
           {/* Blog Content */}
           <div className="flex flex-col gap-2">
-            <label className="text-[10px] font-bold text-[#32171B] uppercase tracking-wider">BLOG CONTENT</label>
+            <div className="flex justify-between items-center">
+              <label className="text-[10px] font-bold text-[#32171B] uppercase tracking-wider">BLOG CONTENT</label>
+              <button 
+                type="button"
+                onClick={handleMagicGenerate}
+                className="text-[9px] font-black text-[#D5A73F] uppercase tracking-wider flex items-center gap-1 hover:text-[#32171B] transition-colors"
+              >
+                <Icons.pencil className="w-2.5 h-2.5" />
+                Magic Generate Content
+              </button>
+            </div>
             <textarea 
               placeholder="Write the full blog post content here."
               value={formData.content}
@@ -245,12 +290,37 @@ export default function BlogForm({ initialData, onSave, onCancel, isNew = false 
         </button>
         <button 
           type="button"
-          onClick={handleSubmit}
-          className="px-8 py-3 bg-[#32171B] text-white rounded-md text-[13px] font-bold hover:bg-[#4a2228] transition-all shadow-sm"
+          onClick={() => executeSave('draft')}
+          className="px-8 py-3 bg-white border border-[#DDD5C8] rounded-md text-[13px] font-bold text-[#32171B] hover:bg-gray-50 transition-all shadow-sm"
         >
-          {isNew ? 'Save and Publish' : 'Save Changes'}
+          Save as Draft
+        </button>
+        <button 
+          type="button"
+          onClick={() => setIsPublishModalOpen(true)}
+          className="px-8 py-3 bg-[#32171B] text-white rounded-md text-[13px] font-bold hover:bg-[#4a2228] transition-all shadow-sm flex items-center gap-2"
+        >
+          <Icons.check className="w-4 h-4" />
+          {initialData?.status === 'published' ? 'Update & Publish' : 'Publish Post'}
         </button>
       </div>
+
+      <ConfirmationModal 
+        isOpen={isPublishModalOpen}
+        onClose={() => setIsPublishModalOpen(false)}
+        onConfirm={() => executeSave('published')}
+        title="Confirm Publication"
+        message="Are you sure you want to publish this blog post? It will be immediately visible to all website visitors."
+        confirmText="Yes, Publish Now"
+        type="primary"
+      />
+
+      <MediaPickerModal 
+        isOpen={isMediaPickerOpen}
+        onClose={() => setIsMediaPickerOpen(false)}
+        onSelect={(url) => handleChange('image', url)}
+        title="Select Featured Image"
+      />
     </div>
   );
 }

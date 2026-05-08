@@ -1,10 +1,10 @@
 'use client';
 
-import React from 'react';
+import { Icons } from '@/components/shared/Icons';
 
-export default function TeamFormActions({ onSaveDraft, onSavePublish, isSaving }) {
+export default function TeamFormActions({ onSaveDraft, onSavePublish, onPreview, isSaving }) {
   return (
-    <div className="form-actions">
+    <div className="form-actions" style={{ display: 'flex', gap: '10px' }}>
       <button 
         type="button" 
         className="secondary-btn" 
@@ -13,6 +13,21 @@ export default function TeamFormActions({ onSaveDraft, onSavePublish, isSaving }
         style={{ opacity: isSaving ? 0.7 : 1, cursor: isSaving ? 'not-allowed' : 'pointer' }}
       >
         Save Draft
+      </button>
+      <button 
+        type="button" 
+        className="secondary-btn" 
+        onClick={onPreview}
+        disabled={isSaving}
+        style={{ 
+          opacity: isSaving ? 0.7 : 1, 
+          cursor: isSaving ? 'not-allowed' : 'pointer',
+          background: 'var(--cream)',
+          borderColor: 'var(--gold)'
+        }}
+      >
+        <Icons.eye style={{ width: '14px', height: '14px', marginRight: '6px' }} />
+        Preview
       </button>
       <button 
         type="button" 

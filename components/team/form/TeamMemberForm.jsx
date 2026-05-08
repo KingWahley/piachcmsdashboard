@@ -10,6 +10,9 @@ import TeamPhotoUpload from './TeamPhotoUpload';
 import TeamBioField from './TeamBioField';
 import TeamSettingsFields from './TeamSettingsFields';
 import TeamFormActions from './TeamFormActions';
+import TeamMemberPreview from '../TeamMemberPreview';
+import { Icons } from '@/components/shared/Icons';
+import ConfirmationModal from '@/components/modals/ConfirmationModal';
 
 export default function TeamMemberForm({ mode = 'create', initialData = null }) {
   const router = useRouter();
@@ -21,21 +24,32 @@ export default function TeamMemberForm({ mode = 'create', initialData = null }) 
     title: '',
     name: '',
     role: '',
-    qualifications: '',
+    qualifications: [''],
     image: '',
     bio: '',
     status: 'active',
     displayOrder: '',
-    ...initialData
+    ...initialData,
+    qualifications: initialData?.qualifications 
+      ? (Array.isArray(initialData.qualifications) ? initialData.qualifications : initialData.qualifications.split(',').map(q => q.trim())) 
+      : ['']
   });
   
   const [errors, setErrors] = useState({});
   const [isSaving, setIsSaving] = useState(false);
   const [successMsg, setSuccessMsg] = useState('');
+  const [isPreviewOpen, setIsPreviewOpen] = useState(false);
+  const [isPublishConfirmOpen, setIsPublishConfirmOpen] = useState(false);
 
   useEffect(() => {
     if (initialData) {
-      setFormData(prev => ({ ...prev, ...initialData }));
+      setFormData(prev => ({ 
+        ...prev, 
+        ...initialData,
+        qualifications: initialData.qualifications 
+          ? (Array.isArray(initialData.qualifications) ? initialData.qualifications : initialData.qualifications.split(',').map(q => q.trim())) 
+          : ['']
+      }));
     }
   }, [initialData]);
 
@@ -60,6 +74,23 @@ export default function TeamMemberForm({ mode = 'create', initialData = null }) 
     setFormData(prev => ({ ...prev, image: url }));
   };
 
+  const handleQualChange = (index, value) => {
+    const newQuals = [...formData.qualifications];
+    newQuals[index] = value;
+    setFormData(prev => ({ ...prev, qualifications: newQuals }));
+  };
+
+  const addQualification = () => {
+    setFormData(prev => ({ ...prev, qualifications: [...prev.qualifications, ''] }));
+  };
+
+  const removeQualification = (index) => {
+    setFormData(prev => ({ 
+      ...prev, 
+      qualifications: prev.qualifications.filter((_, i) => i !== index) 
+    }));
+  };
+
   const validate = () => {
     const newErrors = {};
     if (!formData.name?.trim()) newErrors.name = true;
@@ -80,13 +111,14 @@ export default function TeamMemberForm({ mode = 'create', initialData = null }) 
     }
 
     setIsSaving(true);
+    setIsPublishConfirmOpen(false);
     
     // Simulate API delay
     await new Promise(resolve => setTimeout(resolve, 600));
 
     const finalData = {
       ...formData,
-      status: isDraft ? 'archived' : formData.status // Using 'archived' for draft-like status if needed, or stick to 'draft' if store handles it
+      status: isDraft ? 'archived' : formData.status
     };
 
     if (mode === 'create') {
@@ -110,19 +142,44 @@ export default function TeamMemberForm({ mode = 'create', initialData = null }) 
       <div className="card-header">
         <span className="card-title">{mode === 'create' ? 'Add New Team Member' : 'Edit Team Member'}</span>
         {successMsg && (
-          <span style={{ fontSize: '10px', color: 'var(--green)', fontWeight: 'bold' }}>{successMsg}</span>
+          <span style={{ fontSize: '10px', color: 'var(--green)', fontWeight: 'bold', marginLeft: '12px' }}>{successMsg}</span>
         )}
       </div>
       <div className="form-body">
-        <TeamBasicFields formData={formData} handleChange={handleChange} errors={errors} />
+        <TeamBasicFields 
+          formData={formData} 
+          handleChange={handleChange} 
+          handleQualChange={handleQualChange}
+          addQualification={addQualification}
+          removeQualification={removeQualification}
+          errors={errors} 
+        />
         <TeamPhotoUpload image={formData.image} onChange={handleImageChange} />
         <TeamBioField formData={formData} handleChange={handleChange} errors={errors} />
         <TeamSettingsFields formData={formData} handleChange={handleChange} />
       </div>
       <TeamFormActions 
         onSaveDraft={() => handleSave(true)} 
-        onSavePublish={() => handleSave(false)} 
+        onSavePublish={() => setIsPublishConfirmOpen(true)} 
+        onPreview={() => setIsPreviewOpen(true)}
         isSaving={isSaving}
+      />
+
+      <TeamMemberPreview 
+        isOpen={isPreviewOpen}
+        onClose={() => setIsPreviewOpen(false)}
+        member={formData}
+      />
+
+      <ConfirmationModal 
+        isOpen={isPublishConfirmOpen}
+        onClose={() => setIsPublishConfirmOpen(false)}
+        onConfirm={() => handleSave(false)}
+        title="Ready to Publish?"
+        message={`You are about to ${mode === 'create' ? 'publish this new profile' : 'save changes'} to the live website. Please ensure all details and photos are correct.`}
+        confirmText={mode === 'create' ? 'Publish Now' : 'Save & Publish'}
+        type="info"
+        isLoading={isSaving}
       />
     </div>
   );

@@ -14,6 +14,8 @@ import { useViewMode } from '@/hooks/useViewMode';
 import GridToggle from '@/components/shared/GridToggle';
 import Pagination from '@/components/shared/Pagination';
 
+import ConfirmationModal from '@/components/modals/ConfirmationModal';
+
 export default function VacanciesPage() {
   const { data: vacancies, createItem, updateItem, deleteItem } = useStore(vacanciesStore);
   const { data: applications } = useStore(jobApplicationsStore);
@@ -25,6 +27,11 @@ export default function VacanciesPage() {
   const [reviewVacancy, setReviewVacancy] = useState(null);
   const [currentPage, setCurrentPage] = useState(1);
   const pageSize = 7;
+
+  // Confirmation Modal State
+  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+  const [isPublishModalOpen, setIsPublishModalOpen] = useState(false);
+  const [vacancyToDelete, setVacancyToDelete] = useState(null);
 
   // Reset page when filters change
   useEffect(() => {
@@ -56,6 +63,22 @@ export default function VacanciesPage() {
       setReviewVacancy(null);
     } else {
       setReviewVacancy(vacancy);
+    }
+  };
+
+  const handleDeleteClick = (vacancy) => {
+    setVacancyToDelete(vacancy);
+    setIsDeleteModalOpen(true);
+  };
+
+  const confirmDelete = () => {
+    if (vacancyToDelete) {
+      deleteItem(vacancyToDelete.id);
+      if (reviewVacancy?.id === vacancyToDelete.id) {
+        setReviewVacancy(null);
+      }
+      setIsDeleteModalOpen(false);
+      setVacancyToDelete(null);
     }
   };
 
@@ -178,7 +201,7 @@ export default function VacanciesPage() {
                     <button className="text-btn" style={{ color: 'var(--burgundy)', fontSize: '12px', fontWeight: 'bold' }} onClick={() => handleReview(vacancy)}>View Details</button>
                     <div style={{ display: 'flex', gap: '12px' }}>
                       <Icons.pencil style={{ width: '16px', height: '16px', cursor: 'pointer', color: 'var(--ink-mid)' }} onClick={() => handleEdit(vacancy)} />
-                      <Icons.close style={{ width: '16px', height: '16px', cursor: 'pointer', color: 'var(--red)' }} onClick={() => deleteItem(vacancy.id)} />
+                      <Icons.close style={{ width: '16px', height: '16px', cursor: 'pointer', color: 'var(--red)' }} onClick={() => handleDeleteClick(vacancy)} />
                     </div>
                   </div>
                 </div>
@@ -263,7 +286,7 @@ export default function VacanciesPage() {
                               <button className="icon-btn-bordered" title="Edit Vacancy" onClick={(e) => { e.stopPropagation(); handleEdit(vacancy); }}>
                                 <Icons.pencil style={{ width: '16px', height: '16px' }} />
                               </button>
-                              <button className="icon-btn-bordered" style={{ color: 'var(--red)' }} title="Delete" onClick={(e) => { e.stopPropagation(); deleteItem(vacancy.id); }}>
+                              <button className="icon-btn-bordered" style={{ color: 'var(--red)' }} title="Delete" onClick={(e) => { e.stopPropagation(); handleDeleteClick(vacancy); }}>
                                 <Icons.close style={{ width: '16px', height: '16px' }} />
                               </button>
                             </div>
@@ -350,7 +373,13 @@ export default function VacanciesPage() {
 
                   <div style={{ display: 'flex', gap: '12px', marginTop: '24px' }}>
                     <button className="secondary-btn" style={{ flex: 1, padding: '14px', borderRadius: '6px' }} onClick={() => handleEdit(reviewVacancy)}>Edit Role</button>
-                    <button className="primary-btn" style={{ flex: 1.5, padding: '14px', borderRadius: '6px' }} onClick={() => updateItem(reviewVacancy.id, { ...reviewVacancy, status: 'published' })}>Publish Listing</button>
+                    <button 
+                      className="primary-btn" 
+                      style={{ flex: 1.5, padding: '14px', borderRadius: '6px' }} 
+                      onClick={() => setIsPublishModalOpen(true)}
+                    >
+                      Publish Listing
+                    </button>
                   </div>
                 </div>
               </div>
@@ -365,6 +394,29 @@ export default function VacanciesPage() {
           />
         </div>
       )}
+
+      <ConfirmationModal 
+        isOpen={isDeleteModalOpen}
+        onClose={() => setIsDeleteModalOpen(false)}
+        onConfirm={confirmDelete}
+        title="Delete Vacancy"
+        message={`Are you sure you want to delete the vacancy "${vacancyToDelete?.title}"? This action is permanent and will remove all associated application links.`}
+        confirmText="Delete Vacancy"
+        type="danger"
+      />
+
+      <ConfirmationModal 
+        isOpen={isPublishModalOpen}
+        onClose={() => setIsPublishModalOpen(false)}
+        onConfirm={() => {
+          updateItem(reviewVacancy.id, { ...reviewVacancy, status: 'published' });
+          setIsPublishModalOpen(false);
+        }}
+        title="Publish Vacancy"
+        message={`Are you sure you want to publish the vacancy "${reviewVacancy?.title}"? This will make the listing visible on the public careers page.`}
+        confirmText="Publish Now"
+        type="primary"
+      />
 
       <style jsx>{`
         .icon-btn-bordered {

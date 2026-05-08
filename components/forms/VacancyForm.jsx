@@ -2,8 +2,12 @@
 
 import React, { useState } from 'react';
 import { Icons } from '@/components/shared/Icons';
+import ConfirmationModal from '@/components/modals/ConfirmationModal';
 
 export default function VacancyForm({ initialData, onSave, onCancel, isNew = false }) {
+  const [isPublishModalOpen, setIsPublishModalOpen] = useState(false);
+  const [isPublishing, setIsPublishing] = useState(false);
+  
   const [formData, setFormData] = useState({
     title: initialData?.title || '',
     department: initialData?.department || 'Architecture',
@@ -36,6 +40,20 @@ export default function VacancyForm({ initialData, onSave, onCancel, isNew = fal
   };
 
   const handleSave = (publish = false) => {
+    if (publish) {
+      setIsPublishing(true);
+      setIsPublishModalOpen(true);
+    } else {
+      executeSave(false);
+    }
+  };
+
+  const confirmPublish = () => {
+    executeSave(true);
+    setIsPublishModalOpen(false);
+  };
+
+  const executeSave = (publish) => {
     const finalData = {
       ...formData,
       status: publish ? 'published' : 'draft',
@@ -225,6 +243,16 @@ export default function VacancyForm({ initialData, onSave, onCancel, isNew = fal
           </button>
         </div>
       </div>
+
+      <ConfirmationModal 
+        isOpen={isPublishModalOpen}
+        onClose={() => setIsPublishModalOpen(false)}
+        onConfirm={confirmPublish}
+        title="Confirm Publication"
+        message="You are about to publish this vacancy listing. It will be immediately visible on the career section of the live website. Do you want to proceed?"
+        confirmText="Confirm & Publish"
+        type="warning"
+      />
     </div>
   );
 }

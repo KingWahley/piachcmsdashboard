@@ -5,6 +5,8 @@ import { Icons } from '@/components/shared/Icons';
 import { useStore } from '@/hooks/useStore';
 import { messagesStore } from '@/lib/store';
 import Pagination from '@/components/shared/Pagination';
+import ConfirmationModal from '@/components/modals/ConfirmationModal';
+import Panel from '@/components/panels/Panel';
 
 export default function MessagesPage() {
   const { data, updateItem, deleteItem } = useStore(messagesStore);
@@ -14,6 +16,14 @@ export default function MessagesPage() {
   const [selectedIds, setSelectedIds] = useState([]);
   const [currentPage, setCurrentPage] = useState(1);
   const pageSize = 7;
+
+  // Viewing State
+  const [viewingMsg, setViewingMsg] = useState(null);
+
+  // Confirmation Modal State
+  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+  const [isBulkDelete, setIsBulkDelete] = useState(false);
+  const [msgToDelete, setMsgToDelete] = useState(null);
 
   // Reset page when filters change
   useEffect(() => {
@@ -78,8 +88,35 @@ export default function MessagesPage() {
   };
 
   const handleBulkDelete = () => {
-    selectedIds.forEach(id => deleteItem(id));
-    setSelectedIds([]);
+    setIsBulkDelete(true);
+    setIsDeleteModalOpen(true);
+  };
+
+  const handleView = (msg) => {
+    setViewingMsg(msg);
+    if (msg.status === 'unread') {
+      updateItem(msg.id, { ...msg, status: 'read' });
+    }
+  };
+
+  const confirmDelete = () => {
+    if (isBulkDelete) {
+      selectedIds.forEach(id => deleteItem(id));
+      setSelectedIds([]);
+    } else if (msgToDelete) {
+      deleteItem(msgToDelete.id);
+      setMsgToDelete(null);
+    }
+    setIsDeleteModalOpen(false);
+    setIsBulkDelete(false);
+  };
+
+  const [copyFeedback, setCopyFeedback] = useState(false);
+
+  const handleCopyEmail = (email) => {
+    navigator.clipboard.writeText(email);
+    setCopyFeedback(true);
+    setTimeout(() => setCopyFeedback(false), 2000);
   };
 
   return (
@@ -250,20 +287,36 @@ export default function MessagesPage() {
                       </td>
                       <td className="p-4 align-top">
                         <div className="flex justify-center gap-1.5">
-                          <button className="p-1.5 border border-[#DDD5C8] rounded text-[#5C4E45] hover:bg-[#FAF7F2] transition-colors">
+                          <button 
+                            onClick={() => handleView(msg)}
+                            className="p-1.5 border border-[#DDD5C8] rounded text-[#5C4E45] hover:bg-[#FAF7F2] transition-colors"
+                          >
                             <Icons.eye className="w-3.5 h-3.5" />
                           </button>
-                          <button className="p-1.5 border border-[#DDD5C8] rounded text-[#5C4E45] hover:bg-[#FAF7F2] transition-colors">
-                            <Icons.reply className="w-3.5 h-3.5" />
+                          <button 
+                            onClick={() => handleCopyEmail(msg.email)}
+                            title="Copy Email"
+                            className="p-1.5 border border-[#DDD5C8] rounded text-[#5C4E45] hover:bg-[#FAF7F2] transition-colors relative"
+                          >
+                            <Icons.copy className="w-3.5 h-3.5" />
                           </button>
                           <button 
                             onClick={() => updateItem(msg.id, { ...msg, status: msg.status === 'unread' ? 'read' : 'unread' })}
+                            title={msg.status === 'unread' ? "Mark as Read" : "Mark as Unread"}
                             className="p-1.5 border border-[#DDD5C8] rounded text-[#5C4E45] hover:bg-[#FAF7F2] transition-colors"
                           >
-                            <Icons.check className="w-3.5 h-3.5" />
+                            {msg.status === 'unread' ? (
+                              <Icons.check className="w-3.5 h-3.5" />
+                            ) : (
+                              <Icons.mail className="w-3.5 h-3.5" />
+                            )}
                           </button>
                           <button 
-                            onClick={() => deleteItem(msg.id)}
+                            onClick={() => {
+                              setMsgToDelete(msg);
+                              setIsBulkDelete(false);
+                              setIsDeleteModalOpen(true);
+                            }}
                             className="p-1.5 border border-[#DDD5C8] rounded text-[#5C4E45] hover:bg-[#FAF7F2] transition-colors"
                           >
                             <Icons.close className="w-3.5 h-3.5" />
@@ -286,6 +339,106 @@ export default function MessagesPage() {
           />
         </div>
       </div>
+
+      <ConfirmationModal 
+        isOpen={isDeleteModalOpen}
+        onClose={() => setIsDeleteModalOpen(false)}
+        onConfirm={confirmDelete}
+        title={isBulkDelete ? "Bulk Delete Messages" : "Delete Message"}
+        message={isBulkDelete 
+          ? `Are you sure you want to delete ${selectedIds.length} selected messages? This action cannot be undone.`
+          : `Are you sure you want to delete the message from ${msgToDelete?.firstName} ${msgToDelete?.lastName}? This action cannot be undone.`
+        }
+        confirmText={isBulkDelete ? "Delete All Selected" : "Delete Message"}
+        type="danger"
+      />
+
+      <Panel 
+        isOpen={!!viewingMsg} 
+        onClose={() => setViewingMsg(null)}
+        title="Message Details"
+        actions={
+          <>
+            <button className="secondary-btn" onClick={() => setViewingMsg(null)}>Close</button>
+            <button 
+              className="primary-btn flex items-center gap-2" 
+              onClick={() => handleCopyEmail(viewingMsg?.email)}
+            >
+              {copyFeedback ? (
+                <>
+                  <Icons.check className="w-4 h-4" />
+                  Email Copied!
+                </>
+              ) : (
+                <>
+                  <Icons.copy className="w-4 h-4" />
+                  Copy Email Address
+                </>
+              )}
+            </button>
+          </>
+        }
+      >
+        {viewingMsg && (
+          <div className="space-y-6">
+            <div className="flex items-center gap-4 pb-6 border-b border-[var(--stone)]">
+              <div style={{
+                width: '56px', height: '56px', borderRadius: '50%', background: 'var(--burgundy)',
+                color: 'var(--gold)', display: 'flex', alignItems: 'center', justifyContent: 'center',
+                fontSize: '20px', fontWeight: 'bold'
+              }}>
+                {viewingMsg.firstName[0]}{viewingMsg.lastName[0]}
+              </div>
+              <div>
+                <h3 style={{ fontSize: '18px', color: 'var(--burgundy)', fontWeight: 'bold' }}>
+                  {viewingMsg.firstName} {viewingMsg.lastName}
+                </h3>
+                <div style={{ fontSize: '12px', color: 'var(--ink-light)' }}>
+                  Submitted on {new Date(viewingMsg.date).toLocaleDateString('en-US', { 
+                    month: 'long', day: 'numeric', year: 'numeric', hour: '2-digit', minute: '2-digit' 
+                  })}
+                </div>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-2 gap-4">
+              <div className="p-3 bg-white border border-[var(--stone-dark)] rounded-md">
+                <div style={{ fontSize: '10px', color: 'var(--ink-light)', textTransform: 'uppercase', fontWeight: 'bold', marginBottom: '4px' }}>Email Address</div>
+                <div style={{ fontSize: '13px', color: 'var(--ink)', fontWeight: 'medium' }}>{viewingMsg.email}</div>
+              </div>
+              <div className="p-3 bg-white border border-[var(--stone-dark)] rounded-md">
+                <div style={{ fontSize: '10px', color: 'var(--ink-light)', textTransform: 'uppercase', fontWeight: 'bold', marginBottom: '4px' }}>Phone Number</div>
+                <div style={{ fontSize: '13px', color: 'var(--ink)', fontWeight: 'medium' }}>{viewingMsg.phone}</div>
+              </div>
+            </div>
+
+            <div className="p-4 bg-[var(--white)] border-l-4 border-[var(--gold)] rounded-r-md">
+              <div style={{ fontSize: '10px', color: 'var(--ink-light)', textTransform: 'uppercase', fontWeight: 'bold', marginBottom: '12px' }}>Message Body</div>
+              <div style={{ fontSize: '14px', color: 'var(--ink-mid)', lineHeight: '1.6', whiteSpace: 'pre-wrap' }}>
+                {viewingMsg.body}
+              </div>
+            </div>
+
+            <div className="p-4 bg-[var(--stone-light)] rounded-md border border-[var(--stone-dark)]">
+              <div style={{ fontSize: '10px', color: 'var(--ink-light)', textTransform: 'uppercase', fontWeight: 'bold', marginBottom: '8px' }}>Metadata</div>
+              <div className="space-y-2">
+                <div className="flex justify-between text-[11px]">
+                  <span className="text-[#9A8C82]">Entry ID:</span>
+                  <span className="font-mono text-[#5C4E45]">{viewingMsg.id}</span>
+                </div>
+                <div className="flex justify-between text-[11px]">
+                  <span className="text-[#9A8C82]">Status:</span>
+                  <span className={`font-bold uppercase tracking-wider ${
+                    viewingMsg.status === 'unread' ? 'text-[#A87E28]' : 'text-[#2D6A4F]'
+                  }`}>
+                    {viewingMsg.status}
+                  </span>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+      </Panel>
 
       <style jsx>{`
         .messages-page {

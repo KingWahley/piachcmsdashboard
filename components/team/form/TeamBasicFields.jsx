@@ -2,7 +2,14 @@
 
 import React from 'react';
 
-export default function TeamBasicFields({ formData, handleChange, errors }) {
+export default function TeamBasicFields({ 
+  formData, 
+  handleChange, 
+  handleQualChange, 
+  addQualification, 
+  removeQualification, 
+  errors 
+}) {
   return (
     <>
       <div className="form-group">
@@ -45,15 +52,67 @@ export default function TeamBasicFields({ formData, handleChange, errors }) {
           style={errors?.role ? { borderColor: 'var(--red)' } : {}}
         />
       </div>
-      <div className="form-group">
-        <label>Qualifications</label>
-        <input 
-          name="qualifications" 
-          placeholder="e.g. M.Arch, ARCON, PMP" 
-          value={formData.qualifications || ''} 
-          onChange={handleChange}
-        />
-        <div className="form-helper">Separate multiple qualifications with commas.</div>
+      <div className="form-group" style={{ gridColumn: 'span 2' }}>
+        <label style={{ marginBottom: '12px', display: 'block' }}>Qualifications & Certifications</label>
+        <div style={{ display: 'flex', flexWrap: 'wrap', gap: '10px' }}>
+          {formData.qualifications.map((qual, index) => (
+            <div key={index} style={{ display: 'flex', alignItems: 'center', gap: '8px', background: 'var(--cream-light)', padding: '6px 10px', borderRadius: '6px', border: '1px solid var(--stone)' }}>
+              <input 
+                value={qual}
+                onChange={(e) => handleQualChange(index, e.target.value)}
+                placeholder="e.g. M.Arch"
+                style={{ 
+                  border: 'none', 
+                  background: 'transparent', 
+                  padding: '0', 
+                  fontSize: '12px', 
+                  fontWeight: '700', 
+                  color: 'var(--burgundy)',
+                  width: '80px',
+                  outline: 'none'
+                }}
+              />
+              {formData.qualifications.length > 1 && (
+                <button 
+                  type="button"
+                  onClick={() => removeQualification(index)}
+                  style={{ 
+                    border: 'none', 
+                    background: 'transparent', 
+                    color: 'var(--ink-light)', 
+                    cursor: 'pointer',
+                    fontSize: '14px',
+                    display: 'flex',
+                    alignItems: 'center',
+                    padding: '2px'
+                  }}
+                >
+                  &times;
+                </button>
+              )}
+            </div>
+          ))}
+          <button 
+            type="button"
+            onClick={addQualification}
+            style={{ 
+              border: '1px dashed var(--gold-dark)', 
+              background: 'var(--white)', 
+              color: 'var(--gold-dark)', 
+              padding: '6px 12px', 
+              borderRadius: '6px', 
+              fontSize: '11px', 
+              fontWeight: '800', 
+              cursor: 'pointer',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '6px'
+            }}
+          >
+            + ADD NEW
+          </button>
+        </div>
+        <div className="form-helper" style={{ mt: '8px' }}>Add multiple professional certifications or academic degrees.</div>
       </div>
     </>
   );

@@ -57,10 +57,12 @@ export default function DashboardPage() {
 
   const getStatusClass = (status) => {
     switch ((status || '').toLowerCase()) {
-      case 'new': return 's-new';
+      case 'new': 
+      case 'unread': return 's-new';
       case 'opened':
       case 'read': return 's-opened';
       case 'shortlisted': return 's-shortlisted';
+      case 'interview': return 's-pending';
       case 'rejected': return 's-rejected';
       case 'pending': return 's-pending';
       case 'approved': 
@@ -73,10 +75,11 @@ export default function DashboardPage() {
   const ongoingProjects = projects.filter(p => p.status === 'Ongoing').length;
   const onHoldProjects = projects.filter(p => p.status === 'On Hold').length;
   const activeVacancies = vacancies.filter(v => v.status === 'published').length;
-  const unreadMessages = messages.filter(m => m.status === 'new').length;
-  const openedMessages = messages.filter(m => ['opened', 'read'].includes(m.status)).length;
+  const unreadMessages = messages.filter(m => m.status === 'unread').length;
+  const readMessages = messages.filter(m => m.status === 'read').length;
   const shortlistedApps = applications.filter(a => a.status === 'shortlisted').length;
   const newApps = applications.filter(a => a.status === 'new').length;
+  const draftVacancies = vacancies.filter(v => v.status === 'draft').length;
   const pendingAppointments = appointments.filter(a => a.status === 'Pending').length;
 
   return (
@@ -91,12 +94,12 @@ export default function DashboardPage() {
         <Link href="/vacancies" className="kpi-card" style={{ textDecoration: 'none', minHeight: '100px' }}>
           <div className="kpi-value">{activeVacancies}</div>
           <div className="kpi-label">Active Vacancies</div>
-          <div className="kpi-sub">{applications.length} total applications</div>
+          <div className="kpi-sub">{activeVacancies} published · {draftVacancies} drafts</div>
         </Link>
         <Link href="/messages" className="kpi-card" style={{ textDecoration: 'none', minHeight: '100px' }}>
           <div className="kpi-value">{messages.length}</div>
           <div className="kpi-label">Messages</div>
-          <div className="kpi-sub">{unreadMessages} unread · {openedMessages} opened</div>
+          <div className="kpi-sub">{unreadMessages} unread · {readMessages} read</div>
         </Link>
         <Link href="/job-applications" className="kpi-card" style={{ textDecoration: 'none', minHeight: '100px' }}>
           <div className="kpi-value">{applications.length}</div>

@@ -1,8 +1,11 @@
 import React, { useRef, useState } from 'react';
+import MediaPickerModal from '@/components/modals/MediaPickerModal';
+import { Icons } from '@/components/shared/Icons';
 
 export default function GalleryUpload({ galleryFiles, setGalleryFiles, errors }) {
   const fileInputRef = useRef(null);
   const [isDragActive, setIsDragActive] = useState(false);
+  const [isMediaPickerOpen, setIsMediaPickerOpen] = useState(false);
 
   const handleFileChange = (e) => {
     if (e.target.files && e.target.files.length > 0) {
@@ -35,6 +38,18 @@ export default function GalleryUpload({ galleryFiles, setGalleryFiles, errors })
     if (fileInputRef.current) {
       fileInputRef.current.value = ''; // Reset input
     }
+  };
+
+  const handleLibrarySelect = (urls) => {
+    const newExisting = urls.map(url => ({
+      id: `lib-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+      url
+    }));
+
+    setGalleryFiles(prev => ({
+      ...prev,
+      existingImages: [...(prev.existingImages || []), ...newExisting]
+    }));
   };
 
   const handleRemoveNew = (idToRemove) => {
@@ -82,8 +97,17 @@ export default function GalleryUpload({ galleryFiles, setGalleryFiles, errors })
 
   return (
     <div className="form-field full">
-      <label>Gallery {errors?.gallery && <span style={{ color: 'var(--red)', textTransform: 'none', marginLeft: '4px' }}>{errors.gallery}</span>}</label>
-      
+      <div className="flex justify-between items-center mb-2">
+        <label className="mb-0">Gallery {errors?.gallery && <span style={{ color: 'var(--red)', textTransform: 'none', marginLeft: '4px' }}>{errors.gallery}</span>}</label>
+        <button 
+          type="button"
+          onClick={() => setIsMediaPickerOpen(true)}
+          className="text-[9px] font-black text-[#D5A73F] uppercase tracking-wider flex items-center gap-1 hover:text-[#32171B] transition-colors"
+        >
+          <Icons.media className="w-2.5 h-2.5" />
+          Choose from Library
+        </button>
+      </div>
       <div 
         className={`gallery-upload ${isDragActive ? 'drag-active' : ''}`}
         style={errors?.gallery ? { borderColor: 'var(--red)' } : {}}
@@ -152,6 +176,14 @@ export default function GalleryUpload({ galleryFiles, setGalleryFiles, errors })
           ))}
         </div>
       )}
+
+      <MediaPickerModal 
+        isOpen={isMediaPickerOpen}
+        onClose={() => setIsMediaPickerOpen(false)}
+        onSelect={handleLibrarySelect}
+        title="Select Gallery Images"
+        allowMultiple={true}
+      />
     </div>
   );
 }

@@ -6,6 +6,8 @@ import ProjectBasicFields from './ProjectBasicFields';
 import AdditionalDescriptionFields from './AdditionalDescriptionFields';
 import GalleryUpload from './GalleryUpload';
 import ProjectFormActions from './ProjectFormActions';
+import ProjectPreview from '../ProjectPreview';
+import ConfirmationModal from '@/components/modals/ConfirmationModal';
 import '@/app/projects/new/project-form.css';
 
 export default function ProjectForm({ mode = 'create', initialData = null, onSubmit }) {
@@ -38,7 +40,9 @@ export default function ProjectForm({ mode = 'create', initialData = null, onSub
   const [errors, setErrors] = useState({});
   const [isSaving, setIsSaving] = useState(false);
   const [isPublishing, setIsPublishing] = useState(false);
+  const [isPublishConfirmOpen, setIsPublishConfirmOpen] = useState(false);
   const [successMessage, setSuccessMessage] = useState('');
+  const [isPreviewOpen, setIsPreviewOpen] = useState(false);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -67,6 +71,7 @@ export default function ProjectForm({ mode = 'create', initialData = null, onSub
       setIsSaving(true);
     } else {
       setIsPublishing(true);
+      setIsPublishConfirmOpen(false);
     }
 
     try {
@@ -90,6 +95,39 @@ export default function ProjectForm({ mode = 'create', initialData = null, onSub
       setIsSaving(false);
       setIsPublishing(false);
     }
+  };
+
+  const handleReorderGallery = (newOrder) => {
+    // 1. Update Main Image if changed (first item in preview is always main hero)
+    const firstItem = newOrder[0];
+    if (firstItem && firstItem.url !== formData.image) {
+      setFormData(prev => ({ ...prev, image: firstItem.url }));
+    }
+
+    // 2. Map back to existing and new images
+    // We exclude the main hero from the galleryFiles to avoid duplication if it's the same
+    const galleryItems = newOrder.slice(1);
+    
+    const newExisting = galleryItems
+      .filter(item => item.type === 'existing')
+      .map(item => ({ id: item.id, url: item.url }));
+      
+    const newAdded = galleryItems
+      .filter(item => item.type === 'new')
+      .map(item => item.original);
+
+    setGalleryFiles(prev => ({
+      ...prev,
+      existingImages: newExisting,
+      newImages: newAdded
+    }));
+  };
+
+  const currentProjectData = {
+    ...formData,
+    location: `${formData.city}${formData.state ? `, ${formData.state}` : ''}${formData.country ? `, ${formData.country}` : ''}`,
+    additionalFields,
+    galleryFiles
   };
 
   return (
@@ -128,7 +166,26 @@ export default function ProjectForm({ mode = 'create', initialData = null, onSub
         isSaving={isSaving} 
         isPublishing={isPublishing} 
         handleSaveDraft={() => handleAction('draft')} 
-        handlePublish={() => handleAction('publish')} 
+        handlePublish={() => setIsPublishConfirmOpen(true)} 
+        handlePreview={() => setIsPreviewOpen(true)}
+      />
+
+      <ProjectPreview 
+        isOpen={isPreviewOpen} 
+        onClose={() => setIsPreviewOpen(false)} 
+        project={currentProjectData} 
+        onReorderGallery={handleReorderGallery}
+      />
+
+      <ConfirmationModal 
+        isOpen={isPublishConfirmOpen}
+        onClose={() => setIsPublishConfirmOpen(false)}
+        onConfirm={() => handleAction('publish')}
+        title="Publish Project?"
+        message={`Are you sure you want to ${mode === 'create' ? 'publish this new project' : 'save changes'} to the live portfolio? This will update the project details on the website immediately.`}
+        confirmText={mode === 'create' ? 'Publish Now' : 'Save & Publish'}
+        type="info"
+        isLoading={isPublishing}
       />
     </div>
   );

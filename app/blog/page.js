@@ -2,26 +2,39 @@
 
 import React, { useState, useMemo, useEffect } from 'react';
 import DashboardLayout from '@/components/layout/DashboardLayout';
+import Link from 'next/link';
 import { Icons } from '@/components/shared/Icons';
 import StatusPill from '@/components/shared/StatusPill';
 import EmptyState from '@/components/shared/EmptyState';
-import Panel from '@/components/panels/Panel';
-import BlogForm from '@/components/forms/BlogForm';
 import { useStore } from '@/hooks/useStore';
 import { blogStore } from '@/lib/store';
 import { useFilterSort } from '@/hooks/useFilterSort';
 import Pagination from '@/components/shared/Pagination';
+import ConfirmationModal from '@/components/modals/ConfirmationModal';
+import BlogPreview from '@/components/blog/BlogPreview';
 
 export default function BlogPage() {
-  const { data, createItem, updateItem, deleteItem } = useStore(blogStore);
+  const { data, updateItem, deleteItem } = useStore(blogStore);
   const { filteredAndSortedData, searchQuery, setSearchQuery } = useFilterSort(data, {}, { key: 'date', order: 'desc' });
   
-  const [selectedPost, setSelectedPost] = useState(null);
-  const [isEditing, setIsEditing] = useState(false);
   const [statusFilter, setStatusFilter] = useState('all');
   const [categoryFilter, setCategoryFilter] = useState('all');
   const [currentPage, setCurrentPage] = useState(1);
   const pageSize = 7;
+
+  // Modal & Panel State
+  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+  const [isPublishModalOpen, setIsPublishModalOpen] = useState(false);
+  const [isPreviewOpen, setIsPreviewOpen] = useState(false);
+  const [isSyncModalOpen, setIsSyncModalOpen] = useState(false);
+  const [postToDelete, setPostToDelete] = useState(null);
+  const [postToPublish, setPostToPublish] = useState(null);
+  const [postToPreview, setPostToPreview] = useState(null);
+
+  const handleSyncData = () => {
+    localStorage.removeItem('pieach_cms_blog');
+    window.location.reload();
+  };
 
   // Reset page when filters change
   useEffect(() => {
@@ -33,28 +46,6 @@ export default function BlogPage() {
   const publishedCount = data.filter(p => p.status === 'published').length;
   const draftCount = data.filter(p => p.status === 'draft').length;
   const scheduledCount = data.filter(p => p.status === 'scheduled').length;
-
-  const handleEdit = (post) => {
-    setSelectedPost(post);
-    setIsEditing(true);
-  };
-
-  const handleClosePanel = () => {
-    setSelectedPost(null);
-    setIsEditing(false);
-  };
-
-  const handleSave = (finalData) => {
-    if (selectedPost?.id === 'new') {
-      createItem({
-        ...finalData,
-        reads: 0
-      });
-    } else {
-      updateItem(selectedPost.id, finalData);
-    }
-    handleClosePanel();
-  };
 
   // Final filtering including status and category
   const finalData = useMemo(() => {
@@ -76,6 +67,37 @@ export default function BlogPage() {
 
   const categories = [...new Set(data.map(p => p.category))];
 
+  const handleDeleteClick = (post) => {
+    setPostToDelete(post);
+    setIsDeleteModalOpen(true);
+  };
+
+  const confirmDelete = () => {
+    if (postToDelete) {
+      deleteItem(postToDelete.id);
+      setIsDeleteModalOpen(false);
+      setPostToDelete(null);
+    }
+  };
+
+  const handlePublishClick = (post) => {
+    setPostToPublish(post);
+    setIsPublishModalOpen(true);
+  };
+
+  const confirmPublish = () => {
+    if (postToPublish) {
+      updateItem(postToPublish.id, { ...postToPublish, status: 'published' });
+      setIsPublishModalOpen(false);
+      setPostToPublish(null);
+    }
+  };
+
+  const handlePreview = (post) => {
+    setPostToPreview(post);
+    setIsPreviewOpen(true);
+  };
+
   return (
     <DashboardLayout title="" subtitle="">
       {/* Page Header */}
@@ -85,13 +107,22 @@ export default function BlogPage() {
           <p className="text-[12px] text-[#9A8C82]">Create, edit, publish, and manage blog articles for the Pieach website.</p>
         </div>
 
-        <button 
-          onClick={() => handleEdit({ id: 'new', title: '', excerpt: '', category: 'Architecture', author: 'Admin', date: new Date().toISOString().split('T')[0], status: 'draft', reads: 0, image: '', content: '', tags: [], seoTitle: '', metaDescription: '', slug: '' })}
-          className="bg-[#32171B] text-white px-6 py-3 rounded-md text-xs font-bold hover:bg-[#4a2228] transition-all flex items-center gap-2 shadow-sm"
-        >
-          <Icons.plus className="w-4 h-4" />
-          Add Blog Post
-        </button>
+        <div className="flex gap-4">
+          <button 
+            onClick={() => setIsSyncModalOpen(true)}
+            className="px-6 py-3 border border-[#DDD5C8] text-[#32171B] rounded-md text-[11px] font-bold flex items-center gap-2 hover:bg-[#FAF7F2] transition-all"
+          >
+            <Icons.analytics className="w-3.5 h-3.5 opacity-60" />
+            Sync Content
+          </button>
+          <Link 
+            href="/blog/new"
+            className="bg-[#32171B] text-white px-6 py-3 rounded-md text-xs font-bold hover:bg-[#4a2228] transition-all flex items-center gap-2 shadow-sm"
+          >
+            <Icons.plus className="w-4 h-4" />
+            Add Blog Post
+          </Link>
+        </div>
       </div>
 
       {/* Stats Section */}
@@ -222,17 +253,28 @@ export default function BlogPage() {
                       </td>
                       <td className="px-6 py-5">
                         <div className="flex items-center justify-center gap-2">
-                          <button className="w-8 h-8 rounded border border-[#DDD5C8] flex items-center justify-center text-[#9A8C82] hover:bg-[#D5A73F] hover:text-white hover:border-[#D5A73F] transition-all">
+                          <button 
+                            onClick={() => handlePreview(post)}
+                            className="w-8 h-8 rounded border border-[#DDD5C8] flex items-center justify-center text-[#9A8C82] hover:bg-[#D5A73F] hover:text-white hover:border-[#D5A73F] transition-all"
+                          >
                             <Icons.eye className="w-4 h-4" />
                           </button>
-                          <button 
-                            onClick={() => handleEdit(post)}
+                          {post.status === 'draft' && (
+                            <button 
+                              onClick={() => handlePublishClick(post)}
+                              className="w-8 h-8 rounded border border-[#DDD5C8] flex items-center justify-center text-[#9A8C82] hover:bg-green-600 hover:text-white hover:border-green-600 transition-all"
+                            >
+                              <Icons.check className="w-4 h-4" />
+                            </button>
+                          )}
+                          <Link 
+                            href={`/blog/${post.id}/edit`}
                             className="w-8 h-8 rounded border border-[#DDD5C8] flex items-center justify-center text-[#9A8C82] hover:bg-[#32171B] hover:text-white hover:border-[#32171B] transition-all"
                           >
                             <Icons.pencil className="w-4 h-4" />
-                          </button>
+                          </Link>
                           <button 
-                            onClick={() => { if(confirm('Delete this post?')) deleteItem(post.id); }}
+                            onClick={() => handleDeleteClick(post)}
                             className="w-8 h-8 rounded border border-[#DDD5C8] flex items-center justify-center text-[#9A8C82] hover:bg-red-600 hover:text-white hover:border-red-600 transition-all"
                           >
                             <Icons.close className="w-4 h-4" />
@@ -255,24 +297,51 @@ export default function BlogPage() {
         )}
       </div>
 
-      {/* Edit Panel */}
-      <Panel 
-        isOpen={isEditing && !!selectedPost} 
-        onClose={handleClosePanel} 
-        title={selectedPost?.id === 'new' ? "New Article" : "Edit Article"}
-        width="650px"
-      >
-        {selectedPost && (
-          <div className="p-6">
-            <BlogForm 
-              initialData={selectedPost}
-              onSave={handleSave}
-              onCancel={handleClosePanel}
-              isNew={selectedPost.id === 'new'}
-            />
-          </div>
-        )}
-      </Panel>
+      <ConfirmationModal 
+        isOpen={isSyncModalOpen}
+        onClose={() => setIsSyncModalOpen(false)}
+        onConfirm={handleSyncData}
+        title="Sync Mock Data"
+        message="This will reset your blog list to the default high-fidelity mock data. Any unsaved local changes will be lost. Proceed?"
+        confirmText="Yes, Sync Data"
+        type="primary"
+      />
+
+      <ConfirmationModal 
+        isOpen={isDeleteModalOpen}
+        onClose={() => setIsDeleteModalOpen(false)}
+        onConfirm={confirmDelete}
+        title="Delete Blog Post"
+        message={`Are you sure you want to permanently delete "${postToDelete?.title}"? This action cannot be undone.`}
+        confirmText="Delete Permanently"
+        type="danger"
+      />
+
+      <ConfirmationModal 
+        isOpen={isPublishModalOpen}
+        onClose={() => setIsPublishModalOpen(false)}
+        onConfirm={confirmPublish}
+        title="Publish Blog Post"
+        message={`Are you sure you want to publish "${postToPublish?.title}"?`}
+        confirmText="Publish Post"
+        type="success"
+      />
+
+      <ConfirmationModal 
+        isOpen={isSyncModalOpen}
+        onClose={() => setIsSyncModalOpen(false)}
+        onConfirm={handleSyncData}
+        title="Sync Content Database"
+        message="This will reset your local blog posts to the latest high-fidelity mock data. Any unsaved changes will be lost. Proceed?"
+        confirmText="Yes, Sync Now"
+        type="primary"
+      />
+
+      <BlogPreview
+        isOpen={isPreviewOpen}
+        onClose={() => setIsPreviewOpen(false)}
+        post={postToPreview}
+      />
     </DashboardLayout>
   );
 }

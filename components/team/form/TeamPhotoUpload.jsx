@@ -1,10 +1,13 @@
 'use client';
 
 import React, { useRef, useState } from 'react';
+import MediaPickerModal from '@/components/modals/MediaPickerModal';
+import { Icons } from '@/components/shared/Icons';
 
 export default function TeamPhotoUpload({ image, onChange }) {
   const fileInputRef = useRef(null);
   const [isDragging, setIsDragging] = useState(false);
+  const [isMediaPickerOpen, setIsMediaPickerOpen] = useState(false);
 
   const handleFileChange = (e) => {
     const file = e.target.files[0];
@@ -50,7 +53,17 @@ export default function TeamPhotoUpload({ image, onChange }) {
 
   return (
     <div className="form-group">
-      <label>Profile Photo</label>
+      <div className="flex justify-between items-center mb-2">
+        <label className="mb-0">Profile Photo</label>
+        <button 
+          type="button"
+          onClick={() => setIsMediaPickerOpen(true)}
+          className="text-[9px] font-black text-[#D5A73F] uppercase tracking-wider flex items-center gap-1 hover:text-[#32171B] transition-colors"
+        >
+          <Icons.media className="w-2.5 h-2.5" />
+          Choose from Library
+        </button>
+      </div>
       <input 
         type="file" 
         accept="image/*" 
@@ -93,6 +106,13 @@ export default function TeamPhotoUpload({ image, onChange }) {
           </>
         )}
       </div>
+
+      <MediaPickerModal 
+        isOpen={isMediaPickerOpen}
+        onClose={() => setIsMediaPickerOpen(false)}
+        onSelect={(url) => onChange(url)}
+        title="Select Profile Photo"
+      />
     </div>
   );
 }

@@ -13,6 +13,8 @@ import { useFilterSort } from '@/hooks/useFilterSort';
 import Link from 'next/link';
 import { useViewMode } from '@/hooks/useViewMode';
 import Pagination from '@/components/shared/Pagination';
+import ProjectPreview from '@/components/projects/ProjectPreview';
+import ConfirmationModal from '@/components/modals/ConfirmationModal';
 
 export default function ProjectsPage() {
   const { data, deleteItem } = useStore(projectsStore);
@@ -21,12 +23,45 @@ export default function ProjectsPage() {
   
   const [view, setView] = useViewMode();
   const [currentPage, setCurrentPage] = useState(1);
+  const [isPreviewOpen, setIsPreviewOpen] = useState(false);
+  const [selectedProject, setSelectedProject] = useState(null);
   const pageSize = 7;
+
+  // Confirmation Modal State
+  const [confirmModal, setConfirmModal] = useState({
+    isOpen: false,
+    id: null,
+    title: ''
+  });
 
   // Reset page when filters change
   useEffect(() => {
     setCurrentPage(1);
   }, [searchQuery, filters]);
+
+  const handlePreview = (project) => {
+    setSelectedProject({
+      ...project,
+      galleryFiles: {
+        existingImages: project.gallery || [],
+        newImages: []
+      }
+    });
+    setIsPreviewOpen(true);
+  };
+
+  const handleDeleteClick = (id, title) => {
+    setConfirmModal({
+      isOpen: true,
+      id,
+      title
+    });
+  };
+
+  const handleConfirmDelete = () => {
+    deleteItem(confirmModal.id);
+    setConfirmModal({ isOpen: false, id: null, title: '' });
+  };
 
   const filterOptions = [
     { value: 'all', label: 'All Categories' },
@@ -99,8 +134,15 @@ export default function ProjectsPage() {
                 {paginatedData.map((project) => (
                   <tr key={project.id} style={{ borderBottom: '1px solid var(--stone)' }} className="table-row-hover">
                     <td style={{ padding: '14px 16px', verticalAlign: 'middle' }}>
-                      <div style={{ fontWeight: 'bold', color: 'var(--ink)', fontSize: '12px' }}>{project.title}</div>
-                      <div style={{ fontSize: '10px', color: 'var(--ink-light)', marginTop: '3px', maxWidth: '280px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{project.subtitle}</div>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                        <div style={{ width: '40px', height: '40px', borderRadius: '4px', overflow: 'hidden', flexShrink: 0, border: '1px solid var(--stone-dark)' }}>
+                          <img src={project.image} alt={project.title} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                        </div>
+                        <div>
+                          <div style={{ fontWeight: 'bold', color: 'var(--ink)', fontSize: '12px' }}>{project.title}</div>
+                          <div style={{ fontSize: '10px', color: 'var(--ink-light)', marginTop: '3px', maxWidth: '280px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{project.subtitle}</div>
+                        </div>
+                      </div>
                     </td>
                     <td style={{ padding: '14px 16px', verticalAlign: 'middle', fontSize: '12px', color: 'var(--ink-mid)' }}>
                       <div style={{ maxWidth: '120px' }}>
@@ -113,7 +155,15 @@ export default function ProjectsPage() {
                       </span>
                     </td>
                     <td style={{ padding: '14px 16px', verticalAlign: 'middle', fontSize: '12px', color: 'var(--ink-mid)' }}>
-                      <div style={{ maxWidth: '180px' }}>{project.description}</div>
+                      <div style={{ 
+                        maxWidth: '250px', 
+                        display: '-webkit-box', 
+                        WebkitLineClamp: '1', 
+                        WebkitBoxOrient: 'vertical', 
+                        overflow: 'hidden' 
+                      }}>
+                        {project.description}
+                      </div>
                     </td>
                     <td style={{ padding: '14px 16px', verticalAlign: 'middle' }}>
                       <div className="gallery-count" style={{ display: 'inline-flex', alignItems: 'center', gap: '5px', fontSize: '10px', color: 'var(--blue)', background: 'var(--blue-light)', padding: '4px 8px', borderRadius: '12px', fontWeight: 'bold' }}>
@@ -122,11 +172,18 @@ export default function ProjectsPage() {
                     </td>
                     <td style={{ padding: '14px 16px', verticalAlign: 'middle' }}>
                       <div className="action-group" style={{ display: 'flex', gap: '6px', alignItems: 'center' }}>
-                        <button className="action-btn" title="View" style={{ border: '1px solid var(--stone-dark)', background: 'var(--white)', color: 'var(--ink-mid)', width: '30px', height: '30px', borderRadius: '5px', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}>👁</button>
+                        <button 
+                          className="action-btn" 
+                          title="View" 
+                          onClick={() => handlePreview(project)}
+                          style={{ border: '1px solid var(--stone-dark)', background: 'var(--white)', color: 'var(--ink-mid)', width: '30px', height: '30px', borderRadius: '5px', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}
+                        >
+                          👁
+                        </button>
                         <Link href={`/projects/${project.id}/edit`} style={{ textDecoration: 'none' }}>
                           <button className="action-btn" title="Edit" style={{ border: '1px solid var(--stone-dark)', background: 'var(--white)', color: 'var(--ink-mid)', width: '30px', height: '30px', borderRadius: '5px', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}>✎</button>
                         </Link>
-                        <button className="action-btn delete" title="Delete" onClick={() => deleteItem(project.id)} style={{ border: '1px solid var(--stone-dark)', background: 'var(--white)', color: 'var(--ink-mid)', width: '30px', height: '30px', borderRadius: '5px', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}>×</button>
+                        <button className="action-btn delete" title="Delete" onClick={() => handleDeleteClick(project.id, project.title)} style={{ border: '1px solid var(--stone-dark)', background: 'var(--white)', color: 'var(--ink-mid)', width: '30px', height: '30px', borderRadius: '5px', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}>×</button>
                       </div>
                     </td>
                   </tr>
@@ -147,7 +204,17 @@ export default function ProjectsPage() {
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))', gap: '14px', marginBottom: '24px' }}>
             {paginatedData.map((project) => (
               <div key={project.id} style={{ border: '1px solid var(--stone-dark)', borderRadius: '8px', background: 'var(--white)', overflow: 'hidden' }}>
-                <div style={{ height: '118px', background: 'linear-gradient(135deg, var(--burgundy) 0%, var(--burgundy-mid) 45%, var(--gold-dark) 100%)', position: 'relative', display: 'flex', alignItems: 'flex-end', padding: '12px' }}>
+                <div style={{ 
+                  height: '160px', 
+                  backgroundImage: `url(${project.image})`, 
+                  backgroundSize: 'cover', 
+                  backgroundPosition: 'center', 
+                  position: 'relative', 
+                  display: 'flex', 
+                  alignItems: 'flex-end', 
+                  padding: '12px' 
+                }}>
+                  <div style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, background: 'linear-gradient(to bottom, transparent 60%, rgba(0,0,0,0.6) 100%)' }}></div>
                   <div style={{ position: 'relative', zIndex: 1, background: 'rgba(255,255,255,0.92)', color: 'var(--burgundy)', fontSize: '10px', padding: '4px 8px', borderRadius: '12px', fontWeight: 'bold' }}>
                     {project.category}
                   </div>
@@ -157,15 +224,34 @@ export default function ProjectsPage() {
                   <div style={{ fontSize: '10px', color: 'var(--ink-light)', marginBottom: '10px', display: 'flex', gap: '8px' }}>
                     <StatusPill status={project.status} /> <span>{project.date}</span>
                   </div>
-                  <div style={{ fontSize: '10px', color: 'var(--ink-mid)', lineHeight: '1.45', minHeight: '42px' }}>{project.description}</div>
+                  <div style={{ 
+                    fontSize: '10px', 
+                    color: 'var(--ink-mid)', 
+                    lineHeight: '1.45', 
+                    display: '-webkit-box', 
+                    WebkitLineClamp: '1', 
+                    WebkitBoxOrient: 'vertical', 
+                    overflow: 'hidden' 
+                  }}>
+                    {project.description}
+                  </div>
                 </div>
                 <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '11px 13px', borderTop: '1px solid var(--stone)', background: 'var(--cream)' }}>
                    <div className="gallery-count" style={{ display: 'inline-flex', alignItems: 'center', gap: '5px', fontSize: '10px', color: 'var(--blue)', background: 'var(--blue-light)', padding: '4px 8px', borderRadius: '12px', fontWeight: 'bold' }}>
                      <Icons.media style={{ width: '12px', height: '12px' }} /> {project.galleryCount || 0} images
                    </div>
-                   <Link href={`/projects/${project.id}/edit`} style={{ textDecoration: 'none' }}>
-                     <button className="secondary-btn" style={{ padding: '6px 10px', fontSize: '10px' }}>Edit Project</button>
-                   </Link>
+                   <div style={{ display: 'flex', gap: '8px' }}>
+                     <button 
+                       className="secondary-btn" 
+                       onClick={() => handlePreview(project)}
+                       style={{ padding: '6px 10px', fontSize: '10px' }}
+                     >
+                       Preview
+                     </button>
+                     <Link href={`/projects/${project.id}/edit`} style={{ textDecoration: 'none' }}>
+                       <button className="secondary-btn" style={{ padding: '6px 10px', fontSize: '10px' }}>Edit Project</button>
+                     </Link>
+                   </div>
                 </div>
               </div>
             ))}
@@ -179,6 +265,22 @@ export default function ProjectsPage() {
           />
         </>
       )}
+
+      <ProjectPreview 
+        isOpen={isPreviewOpen} 
+        onClose={() => setIsPreviewOpen(false)} 
+        project={selectedProject} 
+      />
+
+      <ConfirmationModal 
+        isOpen={confirmModal.isOpen}
+        onClose={() => setConfirmModal({ ...confirmModal, isOpen: false })}
+        onConfirm={handleConfirmDelete}
+        title="Delete Project"
+        message={`Are you sure you want to delete "${confirmModal.title}"? This project and its associated media will be permanently removed.`}
+        confirmText="Delete Project"
+        type="danger"
+      />
     </DashboardLayout>
   );
 }

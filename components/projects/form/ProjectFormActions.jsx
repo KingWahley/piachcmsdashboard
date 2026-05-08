@@ -1,8 +1,17 @@
 import React from 'react';
 
-export default function ProjectFormActions({ isSaving, isPublishing, handleSaveDraft, handlePublish }) {
+export default function ProjectFormActions({ isSaving, isPublishing, handleSaveDraft, handlePublish, handlePreview }) {
   return (
     <div className="form-actions">
+      <button 
+        type="button" 
+        className="secondary-btn preview-btn"
+        onClick={handlePreview}
+        style={{ marginRight: 'auto' }}
+      >
+        <span style={{ marginRight: '8px' }}>👁</span>
+        Live Preview
+      </button>
       <button 
         type="button" 
         className="secondary-btn"

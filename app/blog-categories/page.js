@@ -8,6 +8,7 @@ import { blogCategoriesStore, blogStore } from '@/lib/store';
 import { useFilterSort } from '@/hooks/useFilterSort';
 import SearchToolbar from '@/components/shared/SearchToolbar';
 import Pagination from '@/components/shared/Pagination';
+import ConfirmationModal from '@/components/modals/ConfirmationModal';
 
 export default function BlogCategoriesPage() {
   const { data, createItem, updateItem, deleteItem } = useStore(blogCategoriesStore);
@@ -18,6 +19,10 @@ export default function BlogCategoriesPage() {
   const [formData, setFormData] = useState({ name: '', slug: '', description: '', status: 'Active' });
   const [currentPage, setCurrentPage] = useState(1);
   const pageSize = 7;
+
+  // Confirmation Modal State
+  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+  const [catToDelete, setCatToDelete] = useState(null);
 
   // Pagination logic
   const totalPages = Math.ceil(filteredAndSortedData.length / pageSize);
@@ -190,7 +195,14 @@ export default function BlogCategoriesPage() {
                         <button className="action-btn" title="Edit" onClick={() => handleEdit(cat)}>
                           <Icons.pencil style={{ width: '14px', height: '14px' }} />
                         </button>
-                        <button className="action-btn delete" title="Delete" onClick={() => deleteItem(cat.id)}>
+                        <button 
+                          className="action-btn delete" 
+                          title="Delete" 
+                          onClick={() => {
+                            setCatToDelete(cat);
+                            setIsDeleteModalOpen(true);
+                          }}
+                        >
                           <Icons.close style={{ width: '14px', height: '14px' }} />
                         </button>
                       </div>
@@ -214,6 +226,19 @@ export default function BlogCategoriesPage() {
           </div>
         </div>
       </div>
+      <ConfirmationModal 
+        isOpen={isDeleteModalOpen}
+        onClose={() => setIsDeleteModalOpen(false)}
+        onConfirm={() => {
+          deleteItem(catToDelete.id);
+          setIsDeleteModalOpen(false);
+          setCatToDelete(null);
+        }}
+        title="Delete Category"
+        message={`Are you sure you want to delete the category "${catToDelete?.name}"? This will affect blog posts associated with this category.`}
+        confirmText="Delete Category"
+        type="danger"
+      />
       <style dangerouslySetInnerHTML={{__html: `
         @keyframes fadeIn {
           from { opacity: 0; transform: translateX(-15px); }

@@ -1,35 +1,86 @@
-import React, { useEffect, useRef } from 'react';
+'use client';
+import React, { useEffect, useRef, useState } from 'react';
+import { createPortal } from 'react-dom';
 import { Icons } from '@/components/shared/Icons';
 import gsap from 'gsap';
+import Lenis from '@studio-freight/lenis';
 
 export default function Modal({ isOpen, onClose, title, children, actions }) {
   const backdropRef = useRef(null);
   const modalRef = useRef(null);
+  const bodyRef = useRef(null);
+  const lenisRef = useRef(null);
+  const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
-    if (isOpen) {
-      gsap.fromTo(backdropRef.current, { opacity: 0, display: 'none' }, { opacity: 1, display: 'flex', duration: 0.2 });
-      gsap.fromTo(modalRef.current, { opacity: 0, y: 20, scale: 0.95 }, { opacity: 1, y: 0, scale: 1, duration: 0.3, ease: 'back.out(1.5)' });
-      document.body.style.overflow = 'hidden';
-    } else {
-      gsap.to(modalRef.current, { opacity: 0, y: 10, scale: 0.95, duration: 0.2, ease: 'power2.in' });
-      gsap.to(backdropRef.current, { opacity: 0, duration: 0.2, onComplete: () => {
-        if (backdropRef.current) backdropRef.current.style.display = 'none';
-        document.body.style.overflow = '';
-      }});
-    }
-    return () => { document.body.style.overflow = ''; };
-  }, [isOpen]);
+    setMounted(true);
+  }, []);
 
-  return (
+  useEffect(() => {
+    if (isOpen && mounted && backdropRef.current && modalRef.current) {
+      document.body.style.overflow = 'hidden';
+      gsap.set(backdropRef.current, { display: 'flex' });
+      gsap.fromTo(backdropRef.current, { opacity: 0 }, { opacity: 1, duration: 0.3 });
+      gsap.fromTo(modalRef.current, 
+        { scale: 0.9, opacity: 0, y: 20 }, 
+        { scale: 1, opacity: 1, y: 0, duration: 0.4, ease: 'back.out(1.7)' }
+      );
+
+      if (bodyRef.current) {
+        lenisRef.current = new Lenis({
+          wrapper: bodyRef.current,
+          content: bodyRef.current.firstElementChild,
+          duration: 1.2,
+          easing: (t) => Math.min(1, 1.001 - Math.pow(2, -10 * t)),
+          orientation: 'vertical',
+          gestureOrientation: 'vertical',
+          smoothWheel: true,
+          wheelMultiplier: 1,
+          smoothTouch: false,
+          touchMultiplier: 2,
+          infinite: false,
+        });
+
+        const raf = (time) => {
+          lenisRef.current?.raf(time);
+          requestAnimationFrame(raf);
+        };
+        requestAnimationFrame(raf);
+      }
+    } else if (!isOpen && mounted && backdropRef.current && modalRef.current) {
+      document.body.style.overflow = 'auto';
+      gsap.to(backdropRef.current, { opacity: 0, duration: 0.3, onComplete: () => {
+        if (backdropRef.current) gsap.set(backdropRef.current, { display: 'none' });
+      }});
+      gsap.to(modalRef.current, { scale: 0.9, opacity: 0, y: 20, duration: 0.3 });
+      
+      if (lenisRef.current) {
+        lenisRef.current.destroy();
+        lenisRef.current = null;
+      }
+    }
+
+    return () => {
+      if (lenisRef.current) {
+        lenisRef.current.destroy();
+        lenisRef.current = null;
+      }
+    };
+  }, [isOpen, mounted]);
+
+  if (!mounted) return null;
+
+  return createPortal(
     <div className="modal-backdrop" ref={backdropRef} onClick={onClose} style={{ display: 'none' }}>
       <div className="appointment-modal" ref={modalRef} onClick={(e) => e.stopPropagation()}>
         <div className="modal-header">
           <div className="modal-title">{title}</div>
           <button className="modal-close" onClick={onClose}>&times;</button>
         </div>
-        <div className="modal-body">
-          {children}
+        <div className="modal-body" ref={bodyRef}>
+          <div>
+            {children}
+          </div>
         </div>
         {actions && (
           <div className="modal-actions">
@@ -37,6 +88,7 @@ export default function Modal({ isOpen, onClose, title, children, actions }) {
           </div>
         )}
       </div>
-    </div>
+    </div>,
+    document.body
   );
 }
